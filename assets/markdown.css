@@ -18,8 +18,8 @@ html, body, div, span, applet, object, iframe, h1, h2, h3, h4, h5, h6, p, blockq
 
 body {
     font-family: Microsoft YaHei, Helvetica, arial, freesans, clean, sans-serif;
-    font-size: 1.1em;
-    line-height: 1.6;
+    font-size: 16px;
+    line-height: 1.5;
     color: #333;
     background-color: #fff;
     padding: 20px;
@@ -173,7 +173,7 @@ dl dd > :last-child {
 
 pre, code, tt {
     font-size: 90%;
-    font-family: Courier, Consolas, monospace;
+    font-family: Consolas, 宋体, monospace;
 }
 
 code, tt {
@@ -251,7 +251,7 @@ hr {
     overflow: hidden;
     border: none;
     background: transparent;
-    border-bottom: 4px solid #ddd;
+    border-bottom: 1px solid #ddd;
     padding: 0;
 }
 
