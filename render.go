@@ -41,7 +41,7 @@ public static List<Method> getMethodsAnnotatedWithMethodXY(final Class<?> type) 
 var ignoreTags = []string{"script", "title"}
 
 func MarkdownToHtml(md string) string {
-	md = strings.ReplaceAll(md, "\r", "")
+	md = strings.Replace(md, "\r", "", -1)
 	return string(blackfriday.Run([]byte(md), blackfriday.WithRenderer(bfchroma.NewRenderer(bfchroma.ChromaStyle(styles.Dracula)))))
 }
 
@@ -52,19 +52,25 @@ func HighlightKeyword(html string, key string) string {
 	keyLen := len(keyRune)
 	/*STATE
 	  0: Inside angle bracket
-	  1: Outside angle bracket*/
+	  1: Outside angle bracket
+	  2: Inside special char e.g. &lt;*/
 	state := 0
 	matchLen := 0
 	flagBegin := []rune("<b style=\"color:red;background:yellow;\">")
 	flagEnd := []rune("</b>")
 	beginLen := len(flagBegin)
+	_ = beginLen
 	//flagEndLen := len(flagEnd)
 	flagLen := len(flagBegin) + len(flagEnd)
+	_ = flagLen
 	ignoreTagLevel := 0
 	var tag []rune
 	for i := 0; i < htmlLen; i++ {
 		switch state {
 		case 0:
+			if htmlRune[i] == '&' {
+				state = 2
+			}
 			if htmlRune[i] == '<' {
 				state = 1
 			} else if runeEqualIgnoreCase(htmlRune[i], keyRune[matchLen]) {
@@ -100,6 +106,10 @@ func HighlightKeyword(html string, key string) string {
 			} else {
 				tag = append(tag, htmlRune[i])
 			}
+		case 2:
+			if htmlRune[i] == ';' {
+				state = 0
+			}
 		}
 	}
 	return string(htmlRune)
@@ -132,11 +142,11 @@ func exitIgnoreTag(tagName string) bool {
 }
 
 func insertRuneSliceAt(dst []rune, src []rune, index int) (ret []rune) {
-	prefix := dst[:index]
-	suffix := dst[index:]
-	ret = append(ret, prefix...)
+	//prefix := dst[:index]
+	//suffix := dst[index:]
+	ret = append(ret, dst[:index]...)
 	ret = append(ret, src...)
-	ret = append(ret, suffix...)
+	ret = append(ret, dst[index:]...)
 	return
 }
 
