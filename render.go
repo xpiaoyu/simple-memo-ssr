@@ -78,13 +78,13 @@ func HighlightKeyword(html string, key string) string {
 				if matchLen >= keyLen {
 					// Find match!
 					matchLen = 0
-					htmlRune = insertRuneSliceAt(htmlRune, flagBegin, i-keyLen+1)
+					//htmlRune = insertRuneSliceAt(htmlRune, flagBegin, i-keyLen+1)
 					//log.Println("html:", string(htmlRune))
-					htmlRune = insertRuneSliceAt(htmlRune, flagEnd, i+beginLen+1)
+					//htmlRune = insertRuneSliceAt(htmlRune, flagEnd, i+beginLen+1)
 					//log.Println("html:", string(htmlRune))
+					htmlRune = insertRuneSliceAt(htmlRune, flagBegin, flagEnd, i-keyLen+1, i+1)
 					i += flagLen
 					htmlLen += flagLen
-					//log.Println("i:", i)
 				}
 			} else {
 				matchLen = 0
@@ -141,12 +141,32 @@ func exitIgnoreTag(tagName string) bool {
 	return false
 }
 
-func insertRuneSliceAt(dst []rune, src []rune, index int) (ret []rune) {
+func insertRuneSliceAt(dst []rune, src []rune, src2 []rune, index int, index2 int) (ret []rune) {
 	//prefix := dst[:index]
 	//suffix := dst[index:]
-	ret = append(ret, dst[:index]...)
-	ret = append(ret, src...)
-	ret = append(ret, dst[index:]...)
+	//ret = append(ret, dst[:index]...)
+	//ret = append(ret, src...)
+	//ret = append(ret, dst[index:]...)
+	//log.Println("cap:", cap(dst), "len:", len(dst), "index:", index, "index2", index2)
+	len1 := len(src)
+	len2 := len(src2)
+	//if cap(dst)-len(dst) >= len1+len2 {
+	//	ret = dst
+	//} else {
+	//	ret = make([]rune, len(dst)+len1+len2)
+	//}
+	//ret = make([]rune, len(dst)+len1+len2)
+	//ret = dst
+	lenDst := len(dst)
+	//ret = dst
+	//ret = append(ret, src...)
+	//ret = append(ret, src2...)
+	ret = make([]rune, len(dst)+len1+len2)
+	copy(ret, dst[:index])
+	copy(ret[index+len1:], dst[index:index2])
+	copy(ret[index2+len1+len2:], dst[index2:lenDst])
+	copy(ret[index:], src)
+	copy(ret[index2+len1:], src2)
 	return
 }
 
