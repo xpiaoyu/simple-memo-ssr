@@ -172,7 +172,7 @@ List<span style="color:#ff79c6">&lt;</span>FooBarClass<span style="color:#ff79c6
 func BenchmarkHighlightKeyword(b *testing.B) {
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		HighlightKeyword(html, "t")
+		HighlightKeyword(html, "延迟")
 	}
 }
 

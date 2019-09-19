@@ -65,6 +65,7 @@ func HighlightKeyword(html string, key string) string {
 	_ = flagLen
 	ignoreTagLevel := 0
 	var tag []rune
+	var tagLen int
 	for i := 0; i < htmlLen; i++ {
 		switch state {
 		case 0:
@@ -91,7 +92,7 @@ func HighlightKeyword(html string, key string) string {
 			}
 		case 1:
 			if htmlRune[i] == '>' {
-				tagName := string(tag)
+				tagName := string(tag[:tagLen])
 				//log.Println("tag-name:", tagName)
 				if enterIgnoreTag(tagName) {
 					ignoreTagLevel++
@@ -102,9 +103,14 @@ func HighlightKeyword(html string, key string) string {
 				} else {
 					state = 0
 				}
-				tag = nil
+				tagLen = 0
 			} else {
-				tag = append(tag, htmlRune[i])
+				if len(tag) > tagLen {
+					tag[tagLen] = htmlRune[i]
+				} else {
+					tag = append(tag, htmlRune[i])
+				}
+				tagLen++
 			}
 		case 2:
 			if htmlRune[i] == ';' {
@@ -142,29 +148,15 @@ func exitIgnoreTag(tagName string) bool {
 }
 
 func insertRuneSliceAt(dst []rune, src []rune, src2 []rune, index int, index2 int) (ret []rune) {
-	//prefix := dst[:index]
-	//suffix := dst[index:]
-	//ret = append(ret, dst[:index]...)
-	//ret = append(ret, src...)
-	//ret = append(ret, dst[index:]...)
-	//log.Println("cap:", cap(dst), "len:", len(dst), "index:", index, "index2", index2)
 	len1 := len(src)
 	len2 := len(src2)
-	//if cap(dst)-len(dst) >= len1+len2 {
-	//	ret = dst
-	//} else {
-	//	ret = make([]rune, len(dst)+len1+len2)
-	//}
-	//ret = make([]rune, len(dst)+len1+len2)
-	//ret = dst
 	lenDst := len(dst)
-	//ret = dst
-	//ret = append(ret, src...)
-	//ret = append(ret, src2...)
-	ret = make([]rune, len(dst)+len1+len2)
-	copy(ret, dst[:index])
-	copy(ret[index+len1:], dst[index:index2])
+	ret = dst
+	ret = append(ret, src...)
+	ret = append(ret, src2...)
 	copy(ret[index2+len1+len2:], dst[index2:lenDst])
+	copy(ret[index+len1:], dst[index:index2])
+	copy(ret, dst[:index])
 	copy(ret[index:], src)
 	copy(ret[index2+len1:], src2)
 	return
