@@ -149,3 +149,21 @@ List<FooBarClass> list = new Gson().fromJson(jsonString, type);
 代码抽象一致性、圈复杂度低、以逻辑变量代替大段逻辑语句、以多个逻辑变量的卫语句实现分解的逻辑链路，五个1原则。
 
 --------
+
+```sql
+select * from test where id = 100
+```
+
+```xml
+<select id="getEmployeesListParams" resultType="Employees">
+        select *
+        from EMPLOYEES e
+        where e.EMPLOYEE_ID in
+        <foreach collection="list" item="employeeId" index="index"
+            open="(" close=")" separator=",">
+            #{employeeId}
+        </foreach>
+</select>
+```
+
+> hello

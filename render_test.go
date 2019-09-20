@@ -1,6 +1,8 @@
 package main
 
-import "testing"
+import (
+	"testing"
+)
 
 var html = `<h1>仓库</h1>
 
@@ -167,13 +169,16 @@ List<span style="color:#ff79c6">&lt;</span>FooBarClass<span style="color:#ff79c6
 
 <p>代码抽象一致性、圈复杂度低、以逻辑变量代替大段逻辑语句、以多个逻辑变量的卫语句实现分解的逻辑链路，五个1原则。</p>
 
-<hr />`
+<hr />
+<script lang="xxx">test throne transform task</script>
+`
 
 func BenchmarkHighlightKeyword(b *testing.B) {
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		HighlightKeyword(html, "延迟")
 	}
+	b.StopTimer()
 }
 
 func TestHighlightKeyword(t *testing.T) {
@@ -181,5 +186,5 @@ func TestHighlightKeyword(t *testing.T) {
 }
 
 func TestHighlightKeyword2(t *testing.T) {
-	t.Log(HighlightKeyword("ababbbbbbba", "a"))
+	t.Log(HighlightKeyword("ababbbbbbba<script>bbb</script>", "a"))
 }

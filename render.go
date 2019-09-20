@@ -2,7 +2,6 @@ package main
 
 import (
 	"github.com/Depado/bfchroma"
-	"github.com/alecthomas/chroma/styles"
 	"gopkg.in/russross/blackfriday.v2"
 	"strings"
 )
@@ -40,9 +39,11 @@ public static List<Method> getMethodsAnnotatedWithMethodXY(final Class<?> type) 
 
 var ignoreTags = []string{"script", "title"}
 
+var ignoreTagsRune = [][]rune{[]rune("script"), []rune("title")}
+
 func MarkdownToHtml(md string) string {
 	md = strings.Replace(md, "\r", "", -1)
-	return string(blackfriday.Run([]byte(md), blackfriday.WithRenderer(bfchroma.NewRenderer(bfchroma.ChromaStyle(styles.Dracula)))))
+	return string(blackfriday.Run([]byte(md), blackfriday.WithRenderer(bfchroma.NewRenderer(bfchroma.ChromaStyle(myGitHub)))))
 }
 
 func HighlightKeyword(html string, key string) string {
@@ -56,15 +57,15 @@ func HighlightKeyword(html string, key string) string {
 	  2: Inside special char e.g. &lt;*/
 	state := 0
 	matchLen := 0
-	flagBegin := []rune("<b style=\"color:red;background:yellow;\">")
-	flagEnd := []rune("</b>")
+	flagBegin := []rune("<span style=\"color:red;background:yellow;\">")
+	flagEnd := []rune("</span>")
 	beginLen := len(flagBegin)
 	_ = beginLen
 	//flagEndLen := len(flagEnd)
 	flagLen := len(flagBegin) + len(flagEnd)
 	_ = flagLen
 	ignoreTagLevel := 0
-	var tag []rune
+	var tag = make([]rune, 0, 16)
 	var tagLen int
 	for i := 0; i < htmlLen; i++ {
 		switch state {
@@ -79,10 +80,6 @@ func HighlightKeyword(html string, key string) string {
 				if matchLen >= keyLen {
 					// Find match!
 					matchLen = 0
-					//htmlRune = insertRuneSliceAt(htmlRune, flagBegin, i-keyLen+1)
-					//log.Println("html:", string(htmlRune))
-					//htmlRune = insertRuneSliceAt(htmlRune, flagEnd, i+beginLen+1)
-					//log.Println("html:", string(htmlRune))
 					htmlRune = insertRuneSliceAt(htmlRune, flagBegin, flagEnd, i-keyLen+1, i+1)
 					i += flagLen
 					htmlLen += flagLen
@@ -92,11 +89,12 @@ func HighlightKeyword(html string, key string) string {
 			}
 		case 1:
 			if htmlRune[i] == '>' {
-				tagName := string(tag[:tagLen])
+				//tagName := string(tag[:tagLen])
+				tagName := tag[:tagLen]
 				//log.Println("tag-name:", tagName)
-				if enterIgnoreTag(tagName) {
+				if enterIgnoreTagRune(tagName) {
 					ignoreTagLevel++
-				} else if exitIgnoreTag(tagName) {
+				} else if exitIgnoreTagRune(tagName) {
 					if ignoreTagLevel > 0 {
 						ignoreTagLevel--
 					}
@@ -119,6 +117,47 @@ func HighlightKeyword(html string, key string) string {
 		}
 	}
 	return string(htmlRune)
+}
+
+func enterIgnoreTagRune(tagName []rune) bool {
+	runeToLower(tagName)
+	for k := range ignoreTagsRune {
+		tag := ignoreTagsRune[k]
+		if runeHasPrefix(tagName, tag) {
+			return true
+		}
+	}
+	return false
+}
+
+func exitIgnoreTagRune(tagName []rune) bool {
+	if len(tagName) <= 0 {
+		return false
+	}
+	runeToLower(tagName)
+	if tagName[0] != '/' {
+		return false
+	}
+	for k := range ignoreTagsRune {
+		tag := ignoreTagsRune[k]
+		if runeHasPrefix(tagName[1:], tag) {
+			return true
+		}
+	}
+	return false
+}
+
+func runeHasPrefix(s, prefix []rune) bool {
+	if len(s) < len(prefix) {
+		return false
+	}
+	prefixLen := len(prefix)
+	for i := 0; i < prefixLen; i++ {
+		if s[i] != prefix[i] {
+			return false
+		}
+	}
+	return true
 }
 
 func enterIgnoreTag(tagName string) bool {
@@ -160,6 +199,14 @@ func insertRuneSliceAt(dst []rune, src []rune, src2 []rune, index int, index2 in
 	copy(ret[index:], src)
 	copy(ret[index2+len1:], src2)
 	return
+}
+
+func runeToLower(src []rune) {
+	for k := range src {
+		if 65 <= src[k] && src[k] <= 90 {
+			src[k] = src[k] + 32
+		}
+	}
 }
 
 func runeEqualIgnoreCase(a, b rune) bool {

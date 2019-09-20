@@ -9,6 +9,7 @@ import (
 	"os"
 	"sort"
 	"strings"
+	"unicode/utf8"
 )
 
 const (
@@ -68,6 +69,7 @@ func main() {
 		switch string(c.Path()) {
 		case RouteAssets:
 			filePath := string(c.QueryArgs().Peek("p"))
+			filePath = strings.Replace(filePath, "..", "", -1)
 			c.SendFile("assets/" + filePath)
 		case RouteArticleList:
 			getArticleList(c)
@@ -188,30 +190,31 @@ func postArticle(c *fasthttp.RequestCtx) {
 func getArticle(c *fasthttp.RequestCtx) {
 	articleId := string(c.QueryArgs().Peek("id"))
 	key := string(c.QueryArgs().Peek("k"))
-	log.Println("article id:", articleId)
-	article, ok := ArticleMap[articleId]
-	if !ok {
-		c.SetStatusCode(fasthttp.StatusNotFound)
-		return
+	log.Println("article id:", articleId, "key:", key)
+	//article, ok := ArticleMap[articleId]
+	//if !ok {
+	//	c.SetStatusCode(fasthttp.StatusNotFound)
+	//	if _, err := c.WriteString("Article Not Found"); err != nil {
+	//		log.Println("[ERROR]", err)
+	//	}
+	//	return
+	//}
+	_, html, err := getMarkdownAndHtml("article/" + articleId + ".md")
+	if err != nil {
+		log.Println("[ERROR]", err)
 	}
 	c.SetContentType(ContentTypeHtml)
-	output := article.Html
-	if len(key) > 0 {
+	output := html
+	if utf8.RuneCountInString(key) >= 2 {
 		output = HighlightKeyword(output, key)
 	}
 	if err := tpl.ExecuteTemplate(c, "article.html",
 		ArticleTpl{
-			Title: "Index",
+			Title: articleId,
 			Html:  template.HTML(output),
 		}); err != nil {
 		log.Println("[ERROR]", err)
 	}
-	//if _, err := c.WriteString(`<meta charset="utf-8">` + article.Html); err != nil {
-	//	log.Println("[ERROR]", err)
-	//}
-	//if err := json.NewEncoder(c).Encode(article.Html); err != nil {
-	//	log.Println("[ERROR]", err)
-	//}
 }
 
 func scanArticleDir() {
@@ -243,19 +246,19 @@ func scanArticleDir() {
 		}
 	}
 	sort.Sort(ArticleList)
-	log.Println("scan article directory successfully")
+	log.Println("Scan article directory successfully")
 	return
 }
 
 func getMarkdownAndHtml(filename string) (markdown, html string, err error) {
 	bytes, err := ioutil.ReadFile(filename)
 	if err != nil {
+		log.Println("[ERROR]", "读取", filename, "失败")
 		return
 	}
+	log.Println("读取", filename, "成功")
 	markdown = string(bytes)
-	log.Println(markdown)
 	html = MarkdownToHtml(markdown)
-	log.Println(html)
 	return
 }
 
