@@ -65,7 +65,7 @@ func HighlightKeyword(html string, key string) string {
 	flagLen := len(flagBegin) + len(flagEnd)
 	_ = flagLen
 	ignoreTagLevel := 0
-	var tag = make([]rune, 0, 16)
+	var tag = make([]rune, 0, 128)
 	var tagLen int
 	for i := 0; i < htmlLen; i++ {
 		switch state {
