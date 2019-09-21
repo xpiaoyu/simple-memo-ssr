@@ -26,7 +26,7 @@ const (
 type Article struct {
 	Id        string `json:"id"`
 	Markdown  string `json:"markdown"`
-	Html      string `json:"html"`
+	Html      []byte `json:"html"`
 	Timestamp int64  `json:"timestamp"`
 }
 
@@ -173,7 +173,7 @@ func postArticle(c *fasthttp.RequestCtx) {
 	}
 	t.Id = upload.Id
 	t.Markdown = upload.Md
-	t.Html = MarkdownToHtml(upload.Md)
+	//t.Html = MarkdownToHtml(upload.Md)
 	fi, err := os.Stat(filename)
 	if err != nil {
 		c.SetStatusCode(fasthttp.StatusInternalServerError)
@@ -188,9 +188,9 @@ func postArticle(c *fasthttp.RequestCtx) {
 }
 
 func getArticle(c *fasthttp.RequestCtx) {
-	articleId := string(c.QueryArgs().Peek("id"))
-	key := string(c.QueryArgs().Peek("k"))
-	log.Println("article id:", articleId, "key:", key)
+	articleId := b2s(c.QueryArgs().Peek("id"))
+	key := c.QueryArgs().Peek("k")
+	log.Println("article id:", articleId, "key:", b2s(key))
 	//article, ok := ArticleMap[articleId]
 	//if !ok {
 	//	c.SetStatusCode(fasthttp.StatusNotFound)
@@ -205,8 +205,8 @@ func getArticle(c *fasthttp.RequestCtx) {
 	}
 	c.SetContentType(ContentTypeHtml)
 	output := html
-	if utf8.RuneCountInString(key) >= 2 {
-		output = HighlightKeyword(output, key)
+	if utf8.RuneCount(key) >= 2 {
+		output = HighlightKeywordBytes(output, key)
 	}
 	if err := tpl.ExecuteTemplate(c, "article.html",
 		ArticleTpl{
@@ -250,15 +250,15 @@ func scanArticleDir() {
 	return
 }
 
-func getMarkdownAndHtml(filename string) (markdown, html string, err error) {
+func getMarkdownAndHtml(filename string) (markdown string, html []byte, err error) {
 	bytes, err := ioutil.ReadFile(filename)
 	if err != nil {
 		log.Println("[ERROR]", "读取", filename, "失败")
 		return
 	}
 	log.Println("读取", filename, "成功")
-	markdown = string(bytes)
-	html = MarkdownToHtml(markdown)
+	//markdown = string(bytes)
+	html = MarkdownToHtml(bytes)
 	return
 }
 

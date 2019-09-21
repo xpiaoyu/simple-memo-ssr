@@ -173,10 +173,20 @@ List<span style="color:#ff79c6">&lt;</span>FooBarClass<span style="color:#ff79c6
 <script lang="xxx">test throne transform task</script>
 `
 
+var htmlBytes = []byte(html)
+
 func BenchmarkHighlightKeyword(b *testing.B) {
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		HighlightKeyword(html, "延迟")
+		HighlightKeyword(html, "t")
+	}
+	b.StopTimer()
+}
+
+func BenchmarkHighlightKeywordBytes(b *testing.B) {
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		HighlightKeywordBytes(htmlBytes, []byte("t"))
 	}
 	b.StopTimer()
 }
@@ -185,6 +195,35 @@ func TestHighlightKeyword(t *testing.T) {
 	t.Log(HighlightKeyword(html, "t"))
 }
 
+func TestHighlightKeywordBytes(t *testing.T) {
+	t.Log(string(HighlightKeywordBytes(htmlBytes, []byte("t"))))
+}
+
 func TestHighlightKeyword2(t *testing.T) {
 	t.Log(HighlightKeyword("ababbbbbbba<script>bbb</script>", "a"))
+}
+
+func TestHighlightKeywordBytes2(t *testing.T) {
+	t.Log(HighlightKeywordBytes([]byte("ababbbbbbba<script>bbb</script>"), []byte("a")))
+}
+
+func TestRune(t *testing.T) {
+	str := "你好"
+	r := []rune(str)
+	b := []byte(str)
+	for _, v := range r {
+		t.Logf("%X ", v)
+	}
+	t.Log()
+	for _, v := range b {
+		t.Logf("%X ", v)
+	}
+}
+
+func BenchmarkStringToBytes(b *testing.B) {
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		_ = []byte(html)
+	}
+	b.StopTimer()
 }
