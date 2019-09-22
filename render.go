@@ -101,8 +101,8 @@ func HighlightKeywordBytes(html []byte, key []byte) []byte {
 	htmlLen := len(htmlData)
 	keyLen := len(keyRune)
 	/*STATE
-	  0: Inside angle bracket
-	  1: Outside angle bracket
+	  0: Outside angle bracket
+	  1: Inside angle bracket
 	  2: Inside special char e.g. &lt;*/
 	state := 0
 	matchLen := 0

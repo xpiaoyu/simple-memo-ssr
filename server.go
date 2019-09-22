@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"github.com/buaazp/fasthttprouter"
 	"github.com/valyala/fasthttp"
 	"html/template"
 	"io/ioutil"
@@ -15,10 +16,11 @@ import (
 const (
 	FasthttpAddr       = ":8083"
 	RouteArticleList   = "/list"
-	RouteGetArticle    = "/get"
+	RouteGetArticle    = "/get/:id"
+	RouteGetArticleOld = "/get"
 	RoutePostArticle   = "/post"
 	RouteCreateArticle = "/create"
-	RouteAssets        = "/assets"
+	RouteAssets        = "/assets/:p"
 	ContentTypeJson    = "application/json"
 	ContentTypeHtml    = "text/html"
 )
@@ -64,7 +66,19 @@ func init() {
 func main() {
 	ArticleMap = make(map[string]*Article)
 	scanArticleDir()
-	firstHandler := func(c *fasthttp.RequestCtx) {
+	router := fasthttprouter.New()
+	// Static files
+	router.GET(RouteAssets, func(c *fasthttp.RequestCtx) {
+		filePath := c.UserValue("p").(string)
+		filePath = strings.Replace(filePath, "..", "", -1)
+		c.SendFile("assets/" + filePath)
+	})
+	// Show article with keyword highlight
+	router.GET(RouteGetArticle, getArticle)
+	// Compatible with old router
+	router.GET(RouteGetArticleOld, getArticle)
+
+	/*firstHandler := func(c *fasthttp.RequestCtx) {
 		c.Response.Header.Add("Access-Control-Allow-Origin", "*")
 		switch string(c.Path()) {
 		case RouteAssets:
@@ -85,8 +99,8 @@ func main() {
 				log.Println("[ERROR]", err)
 			}
 		}
-	}
-	log.Fatal(fasthttp.ListenAndServe(FasthttpAddr, firstHandler))
+	}*/
+	log.Fatal(fasthttp.ListenAndServe(FasthttpAddr, router.Handler))
 }
 
 func createArticle(c *fasthttp.RequestCtx) {
@@ -188,7 +202,15 @@ func postArticle(c *fasthttp.RequestCtx) {
 }
 
 func getArticle(c *fasthttp.RequestCtx) {
-	articleId := b2s(c.QueryArgs().Peek("id"))
+	//articleId := b2s(c.QueryArgs().Peek("id"))
+	var articleId string
+	id := c.UserValue("id")
+	if id != nil {
+		articleId = id.(string)
+	} else {
+		articleId = b2s(c.QueryArgs().Peek("id"))
+	}
+
 	key := c.QueryArgs().Peek("k")
 	log.Println("article id:", articleId, "key:", b2s(key))
 	//article, ok := ArticleMap[articleId]
@@ -239,7 +261,7 @@ func scanArticleDir() {
 				log.Println("[error] getSummaryAndMarkdown err:", err)
 				os.Exit(1)
 			}
-			t.Markdown = md
+			t.Markdown = b2s(md)
 			t.Html = html
 			ArticleList = append(ArticleList, t)
 			ArticleMap[t.Id] = t
@@ -250,7 +272,7 @@ func scanArticleDir() {
 	return
 }
 
-func getMarkdownAndHtml(filename string) (markdown string, html []byte, err error) {
+func getMarkdownAndHtml(filename string) (markdown []byte, html []byte, err error) {
 	bytes, err := ioutil.ReadFile(filename)
 	if err != nil {
 		log.Println("[ERROR]", "读取", filename, "失败")
@@ -258,15 +280,17 @@ func getMarkdownAndHtml(filename string) (markdown string, html []byte, err erro
 	}
 	log.Println("读取", filename, "成功")
 	//markdown = string(bytes)
+	markdown = bytes
 	html = MarkdownToHtml(bytes)
 	return
 }
 
 func getArticleList(c *fasthttp.RequestCtx) {
-	c.SetContentType(ContentTypeJson)
+	c.SetContentType(ContentTypeHtml)
+	/*c.SetContentType(ContentTypeJson)
 	if err := json.NewEncoder(c).Encode(ArticleList); err != nil {
 		log.Println("[ERROR]", err)
-	}
+	}*/
 }
 
 func canCreateFile(filename string) bool {
