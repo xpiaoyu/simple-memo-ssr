@@ -16,7 +16,11 @@ var ignoreTagsRune = [][]rune{[]rune("script"), []rune("title")}
 func MarkdownToHtml(md []byte) []byte {
 	//md = strings.Replace(md, "\r", "", -1)
 	md = bytes.Replace(md, []byte("\r"), nil, -1)
-	return blackfriday.Run(md, blackfriday.WithRenderer(bfchroma.NewRenderer(bfchroma.ChromaStyle(myGitHub))))
+	return blackfriday.Run(
+		md,
+		blackfriday.WithExtensions(blackfriday.Footnotes|blackfriday.AutoHeadingIDs|blackfriday.CommonExtensions),
+		blackfriday.WithRenderer(bfchroma.NewRenderer(bfchroma.ChromaStyle(myGitHub))),
+	)
 }
 
 func HighlightKeyword(html string, key string) string {
@@ -94,8 +98,6 @@ func HighlightKeyword(html string, key string) string {
 }
 
 func HighlightKeywordBytes(html []byte, key []byte) []byte {
-	//htmlData := []byte(html)
-	//keyRune := []byte(key)
 	htmlData := html
 	keyRune := key
 	htmlLen := len(htmlData)
@@ -171,7 +173,7 @@ func enterIgnoreTagByte(tagName []byte) bool {
 	byteToLower(tagName)
 	for k := range ignoreTagsByte {
 		tag := ignoreTagsByte[k]
-		if byteHasPrefix(tagName, tag) {
+		if bytes.HasPrefix(tagName, tag) {
 			return true
 		}
 	}
@@ -199,7 +201,7 @@ func exitIgnoreTagByte(tagName []byte) bool {
 	}
 	for k := range ignoreTagsByte {
 		tag := ignoreTagsByte[k]
-		if byteHasPrefix(tagName[1:], tag) {
+		if bytes.HasPrefix(tagName[1:], tag) {
 			return true
 		}
 	}
@@ -221,19 +223,6 @@ func exitIgnoreTagRune(tagName []rune) bool {
 		}
 	}
 	return false
-}
-
-func byteHasPrefix(s, prefix []byte) bool {
-	if len(s) < len(prefix) {
-		return false
-	}
-	prefixLen := len(prefix)
-	for i := 0; i < prefixLen; i++ {
-		if s[i] != prefix[i] {
-			return false
-		}
-	}
-	return true
 }
 
 func runeHasPrefix(s, prefix []rune) bool {

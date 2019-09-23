@@ -173,7 +173,22 @@ List<span style="color:#ff79c6">&lt;</span>FooBarClass<span style="color:#ff79c6
 <script lang="xxx">test throne transform task</script>
 `
 
+var md = `# 测试
+
+参数 | 示例值 | 参数描述
+--- | --- | ---
+productId | IF | 产品ID 如: IF, IC, IH, TS, TF, T
+date| 2019-7-5 | 交易日期
+
+    t.Timestamp = fi.ModTime().UnixNano() / 1e6
+    sort.Sort(ArticleList)
+    if _, err := c.WriteString("success"); err != nil {
+        log.Println("[ERROR]", err)
+    }
+`
+
 var htmlBytes = []byte(html)
+var mdBytes = []byte(md)
 
 func BenchmarkHighlightKeyword(b *testing.B) {
 	b.ResetTimer()
@@ -186,7 +201,15 @@ func BenchmarkHighlightKeyword(b *testing.B) {
 func BenchmarkHighlightKeywordBytes(b *testing.B) {
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		HighlightKeywordBytes(htmlBytes, []byte("t"))
+		HighlightKeywordBytes(htmlBytes, []byte("tt"))
+	}
+	b.StopTimer()
+}
+
+func BenchmarkMarkdownToHtml(b *testing.B) {
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		MarkdownToHtml(mdBytes)
 	}
 	b.StopTimer()
 }
