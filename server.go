@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
+	"path/filepath"
 	"sort"
 	"strings"
 	"unicode/utf8"
@@ -58,12 +59,15 @@ func (c ArticlePointArray) Less(i, j int) bool {
 var ArticleList ArticlePointArray
 var ArticleMap map[string]*Article
 var tpl *template.Template
+var rootPath string
 
 func init() {
+	rootPath = filepath.Dir(os.Args[0])
 	tpl = template.Must(template.ParseGlob("template/*.html"))
 }
 
 func main() {
+	log.Println("Root path:", rootPath)
 	ArticleMap = make(map[string]*Article)
 	scanArticleDir()
 	router := fasthttprouter.New()
@@ -210,6 +214,7 @@ func getArticle(c *fasthttp.RequestCtx) {
 	} else {
 		articleId = b2s(c.QueryArgs().Peek("id"))
 	}
+	articleId = strings.Replace(articleId, "..", "", -1)
 
 	key := c.QueryArgs().Peek("k")
 	log.Println("article id:", articleId, "key:", b2s(key))
@@ -273,6 +278,13 @@ func scanArticleDir() {
 }
 
 func getMarkdownAndHtml(filename string) (markdown []byte, html []byte, err error) {
+	b := cacheGet(filename)
+	if b != nil {
+		// Hit cache
+		markdown = b
+		html = b
+		return
+	}
 	bytes, err := ioutil.ReadFile(filename)
 	if err != nil {
 		log.Println("[ERROR]", "读取", filename, "失败")
@@ -282,6 +294,7 @@ func getMarkdownAndHtml(filename string) (markdown []byte, html []byte, err erro
 	//markdown = string(bytes)
 	markdown = bytes
 	html = MarkdownToHtml(bytes)
+	cacheSet(filename, html, 5*1000)
 	return
 }
 
