@@ -293,7 +293,7 @@ textarea.mde-text {
     color: #000;
 }
 
-/*scrollbar*/
+/*==========scrollbar==========*/
 ::-webkit-scrollbar-track
 {
     /*-webkit-box-shadow: inset 0 0 6px rgba(0,0,0,0.3);*/
@@ -310,4 +310,10 @@ textarea.mde-text {
 ::-webkit-scrollbar-thumb
 {
     background-color: #999999;
+}
+
+/*==========scrollbar==========*/
+
+.footnotes {
+    font-size: 85%;
 }
