@@ -15,16 +15,16 @@ var m map[string]cacheEntry
 var l sync.RWMutex
 
 func init() {
-	log.Print("[INFO] Cache module loaded.")
 	m = make(map[string]cacheEntry)
 	go cleaner()
+	log.Print("[INFO] Cache module loaded.")
 }
 
 func cleaner() {
 	for range time.Tick(60 * time.Second) {
 		l.Lock()
 		for k, v := range m {
-			if v.ts < getNowMillisecond() {
+			if v.ts > 0 && v.ts < getNowMillisecond() {
 				// Expired
 				delete(m, k)
 			}

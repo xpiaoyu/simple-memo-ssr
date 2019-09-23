@@ -4,10 +4,7 @@ import (
 	"bytes"
 	"github.com/Depado/bfchroma"
 	"gopkg.in/russross/blackfriday.v2"
-	"strings"
 )
-
-var ignoreTags = []string{"script", "title"}
 
 var ignoreTagsByte = [][]byte{[]byte("script"), []byte("title")}
 
@@ -236,32 +233,6 @@ func runeHasPrefix(s, prefix []rune) bool {
 		}
 	}
 	return true
-}
-
-func enterIgnoreTag(tagName string) bool {
-	tagName = strings.ToLower(tagName)
-	for _, v := range ignoreTags {
-		if strings.HasPrefix(tagName, v) {
-			return true
-		}
-	}
-	return false
-}
-
-func exitIgnoreTag(tagName string) bool {
-	if len(tagName) <= 0 {
-		return false
-	}
-	tagName = strings.ToLower(tagName)
-	if tagName[0] != '/' {
-		return false
-	}
-	for _, v := range ignoreTags {
-		if strings.HasPrefix(tagName, "/"+v) {
-			return true
-		}
-	}
-	return false
 }
 
 func insertRuneSliceAtBytes(dst []byte, src []byte, src2 []byte, index int, index2 int) (ret []byte) {
