@@ -1,6 +1,8 @@
 package main
 
 import (
+	"io/ioutil"
+	"log"
 	"testing"
 )
 
@@ -207,9 +209,14 @@ func BenchmarkHighlightKeywordBytes(b *testing.B) {
 }
 
 func BenchmarkMarkdownToHtml(b *testing.B) {
+	bytes, err := ioutil.ReadFile("article/warehouse.md")
+	if err != nil {
+		log.Println("[ERROR]", "读取失败")
+		return
+	}
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		MarkdownToHtml(mdBytes)
+		MarkdownToHtml(bytes)
 	}
 	b.StopTimer()
 }

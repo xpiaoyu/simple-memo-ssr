@@ -16,6 +16,8 @@ var baseRenderer = blackfriday.NewHTMLRenderer(
 		FootnoteReturnLinkContents: "<sup>返回</sup>",
 	})
 
+var chromaRenderer = bfchroma.NewRenderer(bfchroma.ChromaStyle(myGitHub), bfchroma.Extend(baseRenderer))
+
 func MarkdownToHtml(md []byte) []byte {
 	//md = strings.Replace(md, "\r", "", -1)
 	md = bytes.Replace(md, []byte("\r"), nil, -1)
@@ -23,7 +25,7 @@ func MarkdownToHtml(md []byte) []byte {
 		md,
 		blackfriday.WithRenderer(baseRenderer),
 		blackfriday.WithExtensions(blackfriday.Footnotes|blackfriday.AutoHeadingIDs|blackfriday.CommonExtensions),
-		blackfriday.WithRenderer(bfchroma.NewRenderer(bfchroma.ChromaStyle(myGitHub), bfchroma.Extend(baseRenderer))),
+		blackfriday.WithRenderer(chromaRenderer),
 	)
 }
 
