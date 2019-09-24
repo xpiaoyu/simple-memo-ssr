@@ -38,13 +38,13 @@ func BenchmarkTimeNowNano(b *testing.B) {
 func BenchmarkListDirectory(b *testing.B) {
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		listDirectory()
+		_, _ = listDirectory("")
 	}
 	b.StopTimer()
 }
 
 func TestListDirectory(t *testing.T) {
-	t.Log(listDirectory())
+	t.Log(listDirectory(""))
 }
 
 func TestGetFileSizeString(t *testing.T) {

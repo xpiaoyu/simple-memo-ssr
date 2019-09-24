@@ -5,7 +5,7 @@
     <title>根目录{{.Prefix}}</title>
     <style type="text/css">
         table {
-            width: 800px;
+            word-break: break-all;
             font-size: 18px;
             font-family: Consolas, monospace;
         }
@@ -24,21 +24,33 @@
             background: whitesmoke;
             padding: 5px 10px;
         }
+
+        .col1 {
+            width: 500px;
+        }
+
+        .col2 {
+            width: 100px;
+        }
+
+        .col3 {
+            width: 200px;
+        }
     </style>
 </head>
 <body>
 <table>
     <thead>
     <tr>
-        <th>文档名</th>
-        <th>文档大小</th>
-        <th>修改时间</th>
+        <th class="col1">名称</th>
+        <th class="col2">大小</th>
+        <th class="col3">修改时间</th>
     </tr>
     </thead>
     <tbody>
     {{- if ne $.Prefix "/"}}
         <tr>
-            <td><a href="../">../</a></td>
+            <td><a href="..">返回上级..</a></td>
             <td> -</td>
             <td> -</td>
         </tr>
@@ -46,15 +58,15 @@
     {{- range .FileList}}
         {{- if .IsDir}}
             <tr>
-                <td><a href="/dir{{$.Prefix}}{{.Name}}/">{{.Name}}/</a></td>
-                <td> -</td>
-                <td>{{.ModTime}}</td>
+                <td class="col1"><a href="/dir{{$.Prefix}}{{.Name}}/">{{.Name}}/</a></td>
+                <td class="col2"> -</td>
+                <td class="col3">{{.ModTime}}</td>
             </tr>
         {{- else}}
             <tr>
-                <td><a href="/get{{$.Prefix}}{{.Name}}">{{.Name}}</a></td>
-                <td>{{.Size}}</td>
-                <td>{{.ModTime}}</td>
+                <td class="col1"><a href="/get{{$.Prefix}}{{.Name}}">{{.Name}}</a></td>
+                <td class="col2">{{.Size}}</td>
+                <td class="col3">{{.ModTime}}</td>
             </tr>
         {{- end}}
     {{- end}}

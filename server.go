@@ -42,7 +42,7 @@ type UploadPost struct {
 	Id  string `json:"id"`
 }
 
-type ArticleTpl struct {
+type TplArticle struct {
 	Title string
 	Html  template.HTML
 }
@@ -181,24 +181,24 @@ func createArticle(c *fasthttp.RequestCtx) {
 	}
 }
 
-func listDirectory(path string) (ret []FileAndDir) {
+func listDirectory(path string) (ret []FileAndDir, err error) {
 	files, err := ioutil.ReadDir("article" + path)
 	if err != nil {
-		return nil
+		return nil, err
 	}
-	dir := make([]FileAndDir, 0, 8)
+	dir := make([]FileAndDir, 0, 16)
 	ret = make([]FileAndDir, 0, 8)
 	for _, v := range files {
 		if v.IsDir() {
 			dir = append(dir, FileAndDir{
-				Name:    getFileName(v),
+				Name:    v.Name(),
 				IsDir:   v.IsDir(),
 				ModTime: v.ModTime().Format("2006-01-02 15:04"),
 				Size:    "-",
 			})
 		} else {
 			ret = append(ret, FileAndDir{
-				Name:    getFileName(v),
+				Name:    v.Name(),
 				IsDir:   v.IsDir(),
 				ModTime: v.ModTime().Format("2006-01-02 15:04"),
 				Size:    getFileSizeString(v.Size()),
@@ -207,20 +207,6 @@ func listDirectory(path string) (ret []FileAndDir) {
 	}
 	ret = append(dir, ret...)
 	return
-}
-
-func getFileName(v os.FileInfo) (ret string) {
-	ret = v.Name()
-	return
-	//l := len(ret)
-	//if v.IsDir() {
-	//	return
-	//} else {
-	//	if strings.HasSuffix(strings.ToLower(ret), ".md") {
-	//		ret = ret[:l-3]
-	//	}
-	//	return
-	//}
 }
 
 func getFileSizeString(size int64) string {
@@ -242,12 +228,22 @@ func getDir(c *fasthttp.RequestCtx) {
 	if path == nil {
 		path = "/"
 	}
-	path = strings.Replace(path.(string), "..", "", -1)
-	log.Println("Path:", path)
+	p := path.(string)
+	if !strings.HasSuffix(p, "/") {
+		c.Redirect(b2s(c.Path())+"/", 301)
+		return
+	}
+	p = strings.Replace(p, "..", "", -1)
+	log.Println("Path:", p)
 	c.SetContentType(ContentTypeHtml)
+	fl, err := listDirectory(p)
+	if err != nil {
+		c.NotFound()
+		return
+	}
 	if err := tpl.ExecuteTemplate(c, "index.html", TplIndex{
-		FileList: listDirectory(path.(string)),
-		Prefix:   path.(string),
+		FileList: fl,
+		Prefix:   p,
 	}); err != nil {
 		log.Println("[ERROR]", err)
 	}
@@ -328,7 +324,7 @@ func getArticle(c *fasthttp.RequestCtx) {
 		output = HighlightKeywordBytes(output, key)
 	}
 	if err := tpl.ExecuteTemplate(c, "article.html",
-		ArticleTpl{
+		TplArticle{
 			Title: articleId,
 			Html:  template.HTML(output),
 		}); err != nil {
