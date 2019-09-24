@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>目录</title>
+    <style type="text/css">
+        table {
+            width: 800px;
+            font-size: 18px;
+            font-family: Consolas, monospace;
+        }
+
+        th {
+            text-align: left;
+        }
+    </style>
+</head>
+<body>
+<table>
+    <thead>
+    <tr>
+        <th>文档名</th>
+        <th>文档大小</th>
+        <th>修改时间</th>
+    </tr>
+    </thead>
+    <tbody>
+    {{- range .FileList}}
+        <tr>
+            <td><a href="/get/{{.Name}}">{{.Name}}</a></td>
+            <td>{{.Size}}</td>
+            <td>{{.ModTime}}</td>
+        </tr>
+    {{- end}}
+    </tbody>
+</table>
+</body>
+</html>

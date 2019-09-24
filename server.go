@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/buaazp/fasthttprouter"
 	"github.com/valyala/fasthttp"
 	"html/template"
@@ -16,6 +17,7 @@ import (
 
 const (
 	FasthttpAddr       = ":8083"
+	RouteIndex         = "/"
 	RouteArticleList   = "/list"
 	RouteGetArticle    = "/get/:id"
 	RouteGetArticleOld = "/get"
@@ -46,6 +48,17 @@ type ArticleTpl struct {
 
 type ArticlePointArray []*Article
 
+type FileAndDir struct {
+	Name    string
+	IsDir   bool
+	ModTime string
+	Size    string
+}
+
+type TplIndex struct {
+	FileList []FileAndDir
+}
+
 func (c ArticlePointArray) Len() int {
 	return len(c)
 }
@@ -60,6 +73,7 @@ var ArticleList ArticlePointArray
 var ArticleMap map[string]*Article
 var tpl *template.Template
 var rootPath string
+var fileSizeLevel = []string{"B", "KB", "MB", "GB", "TB"}
 
 func init() {
 	rootPath = filepath.Dir(os.Args[0])
@@ -81,6 +95,8 @@ func main() {
 	router.GET(RouteGetArticle, getArticle)
 	// Compatible with old router
 	router.GET(RouteGetArticleOld, getArticle)
+	//
+	router.GET(RouteIndex, getDir)
 
 	/*firstHandler := func(c *fasthttp.RequestCtx) {
 		c.Response.Header.Add("Access-Control-Allow-Origin", "*")
@@ -158,6 +174,57 @@ func createArticle(c *fasthttp.RequestCtx) {
 		if _, err := c.WriteString("existed"); err != nil {
 			log.Println("[ERROR]", err)
 		}
+	}
+}
+
+func listDirectory() (ret []FileAndDir) {
+	files, err := ioutil.ReadDir("article")
+	if err != nil {
+		return nil
+	}
+	ret = make([]FileAndDir, 0, 16)
+	for _, v := range files {
+		ret = append(ret, FileAndDir{
+			Name:    getFileName(v),
+			IsDir:   v.IsDir(),
+			ModTime: v.ModTime().Format("2006-01-02 15:04"),
+			Size:    getFileSizeString(v.Size()),
+		})
+	}
+	return
+}
+
+func getFileName(v os.FileInfo) (ret string) {
+	ret = v.Name()
+	l := len(ret)
+	if v.IsDir() {
+		return
+	} else {
+		if strings.HasSuffix(strings.ToLower(ret), ".md") {
+			ret = ret[:l-3]
+		}
+		return
+	}
+}
+
+func getFileSizeString(size int64) string {
+	sizeF := float32(size)
+	level := 0
+	for {
+		if sizeF >= 1024 && level < 4 {
+			sizeF /= 1024
+			level++
+		} else {
+			break
+		}
+	}
+	return fmt.Sprintf("%.1f%s", sizeF, fileSizeLevel[level])
+}
+
+func getDir(c *fasthttp.RequestCtx) {
+	c.SetContentType(ContentTypeHtml)
+	if err := tpl.ExecuteTemplate(c, "index.html", TplIndex{FileList: listDirectory()}); err != nil {
+		log.Println("[ERROR]", err)
 	}
 }
 

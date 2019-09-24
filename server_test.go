@@ -34,3 +34,26 @@ func BenchmarkTimeNowNano(b *testing.B) {
 	}
 	b.StopTimer()
 }
+
+func BenchmarkListDirectory(b *testing.B) {
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		listDirectory()
+	}
+	b.StopTimer()
+}
+
+func TestListDirectory(t *testing.T) {
+	t.Log(listDirectory())
+}
+
+func TestGetFileSizeString(t *testing.T) {
+	t.Log(getFileSizeString(0))
+	t.Log(getFileSizeString(10))
+	t.Log(getFileSizeString(1024))
+	t.Log(getFileSizeString(10240))
+	t.Log(getFileSizeString(102400000))
+	t.Log(getFileSizeString(1024000000000000))
+	t.Log(getFileSizeString(12909129491249000))
+	t.Log(getFileSizeString(1099511627776))
+}
