@@ -10,17 +10,15 @@ var ignoreTagsByte = [][]byte{[]byte("script"), []byte("title")}
 
 var ignoreTagsRune = [][]rune{[]rune("script"), []rune("title")}
 
-var baseRenderer = blackfriday.NewHTMLRenderer(
-	blackfriday.HTMLRendererParameters{
-		Flags:                      blackfriday.FootnoteReturnLinks | blackfriday.CommonHTMLFlags,
-		FootnoteReturnLinkContents: "<sup>返回</sup>",
-	})
-
-var chromaRenderer = bfchroma.NewRenderer(bfchroma.ChromaStyle(myGitHub), bfchroma.Extend(baseRenderer))
-
 func MarkdownToHtml(md []byte) []byte {
 	//md = strings.Replace(md, "\r", "", -1)
 	md = bytes.Replace(md, []byte("\r"), nil, -1)
+	baseRenderer := blackfriday.NewHTMLRenderer(
+		blackfriday.HTMLRendererParameters{
+			Flags:                      blackfriday.FootnoteReturnLinks | blackfriday.CommonHTMLFlags,
+			FootnoteReturnLinkContents: "<sup>返回</sup>",
+		})
+	chromaRenderer := bfchroma.NewRenderer(bfchroma.ChromaStyle(myGitHub), bfchroma.Extend(baseRenderer))
 	return blackfriday.Run(
 		md,
 		blackfriday.WithRenderer(baseRenderer),
