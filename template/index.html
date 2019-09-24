@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>目录</title>
+    <title>根目录{{.Prefix}}</title>
     <style type="text/css">
         table {
             width: 800px;
@@ -12,10 +12,17 @@
 
         th {
             text-align: left;
+            background: beige;
+            padding: 5px 10px;
         }
 
         tr {
             line-height: 1.5;
+        }
+
+        td {
+            background: whitesmoke;
+            padding: 5px 10px;
         }
     </style>
 </head>
@@ -29,12 +36,27 @@
     </tr>
     </thead>
     <tbody>
-    {{- range .FileList}}
+    {{- if ne $.Prefix "/"}}
         <tr>
-            <td><a href="/get/{{.Name}}">{{.Name}}</a></td>
-            <td>{{.Size}}</td>
-            <td>{{.ModTime}}</td>
+            <td><a href="../">../</a></td>
+            <td> -</td>
+            <td> -</td>
         </tr>
+    {{- end}}
+    {{- range .FileList}}
+        {{- if .IsDir}}
+            <tr>
+                <td><a href="/dir{{$.Prefix}}{{.Name}}/">{{.Name}}/</a></td>
+                <td> -</td>
+                <td>{{.ModTime}}</td>
+            </tr>
+        {{- else}}
+            <tr>
+                <td><a href="/get{{$.Prefix}}{{.Name}}">{{.Name}}</a></td>
+                <td>{{.Size}}</td>
+                <td>{{.ModTime}}</td>
+            </tr>
+        {{- end}}
     {{- end}}
     </tbody>
 </table>

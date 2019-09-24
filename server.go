@@ -18,8 +18,9 @@ import (
 const (
 	FasthttpAddr       = ":8083"
 	RouteIndex         = "/"
+	RouteDir           = "/dir/*path"
 	RouteArticleList   = "/list"
-	RouteGetArticle    = "/get/:id"
+	RouteGetArticle    = "/get/*id"
 	RouteGetArticleOld = "/get"
 	RoutePostArticle   = "/post"
 	RouteCreateArticle = "/create"
@@ -57,6 +58,7 @@ type FileAndDir struct {
 
 type TplIndex struct {
 	FileList []FileAndDir
+	Prefix   string
 }
 
 func (c ArticlePointArray) Len() int {
@@ -95,8 +97,10 @@ func main() {
 	router.GET(RouteGetArticle, getArticle)
 	// Compatible with old router
 	router.GET(RouteGetArticleOld, getArticle)
-	//
+	// Show article directory
 	router.GET(RouteIndex, getDir)
+	//
+	router.GET(RouteDir, getDir)
 
 	/*firstHandler := func(c *fasthttp.RequestCtx) {
 		c.Response.Header.Add("Access-Control-Allow-Origin", "*")
@@ -177,34 +181,46 @@ func createArticle(c *fasthttp.RequestCtx) {
 	}
 }
 
-func listDirectory() (ret []FileAndDir) {
-	files, err := ioutil.ReadDir("article")
+func listDirectory(path string) (ret []FileAndDir) {
+	files, err := ioutil.ReadDir("article" + path)
 	if err != nil {
 		return nil
 	}
-	ret = make([]FileAndDir, 0, 16)
+	dir := make([]FileAndDir, 0, 8)
+	ret = make([]FileAndDir, 0, 8)
 	for _, v := range files {
-		ret = append(ret, FileAndDir{
-			Name:    getFileName(v),
-			IsDir:   v.IsDir(),
-			ModTime: v.ModTime().Format("2006-01-02 15:04"),
-			Size:    getFileSizeString(v.Size()),
-		})
+		if v.IsDir() {
+			dir = append(dir, FileAndDir{
+				Name:    getFileName(v),
+				IsDir:   v.IsDir(),
+				ModTime: v.ModTime().Format("2006-01-02 15:04"),
+				Size:    "-",
+			})
+		} else {
+			ret = append(ret, FileAndDir{
+				Name:    getFileName(v),
+				IsDir:   v.IsDir(),
+				ModTime: v.ModTime().Format("2006-01-02 15:04"),
+				Size:    getFileSizeString(v.Size()),
+			})
+		}
 	}
+	ret = append(dir, ret...)
 	return
 }
 
 func getFileName(v os.FileInfo) (ret string) {
 	ret = v.Name()
-	l := len(ret)
-	if v.IsDir() {
-		return
-	} else {
-		if strings.HasSuffix(strings.ToLower(ret), ".md") {
-			ret = ret[:l-3]
-		}
-		return
-	}
+	return
+	//l := len(ret)
+	//if v.IsDir() {
+	//	return
+	//} else {
+	//	if strings.HasSuffix(strings.ToLower(ret), ".md") {
+	//		ret = ret[:l-3]
+	//	}
+	//	return
+	//}
 }
 
 func getFileSizeString(size int64) string {
@@ -222,8 +238,17 @@ func getFileSizeString(size int64) string {
 }
 
 func getDir(c *fasthttp.RequestCtx) {
+	path := c.UserValue("path")
+	if path == nil {
+		path = "/"
+	}
+	path = strings.Replace(path.(string), "..", "", -1)
+	log.Println("Path:", path)
 	c.SetContentType(ContentTypeHtml)
-	if err := tpl.ExecuteTemplate(c, "index.html", TplIndex{FileList: listDirectory()}); err != nil {
+	if err := tpl.ExecuteTemplate(c, "index.html", TplIndex{
+		FileList: listDirectory(path.(string)),
+		Prefix:   path.(string),
+	}); err != nil {
 		log.Println("[ERROR]", err)
 	}
 }
@@ -293,7 +318,7 @@ func getArticle(c *fasthttp.RequestCtx) {
 	//	}
 	//	return
 	//}
-	_, html, err := getMarkdownAndHtml("article/" + articleId + ".md")
+	_, html, err := getMarkdownAndHtml("article" + articleId)
 	if err != nil {
 		log.Println("[ERROR]", err)
 	}
