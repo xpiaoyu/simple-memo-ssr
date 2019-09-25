@@ -174,7 +174,7 @@ dl dd > :last-child {
 
 pre, code, tt {
     font-size: 90%;
-    font-family: Consolas, 宋体, monospace;
+    font-family: Consolas, monospace;
 }
 
 code, tt {

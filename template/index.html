@@ -31,10 +31,12 @@
 
         .col2 {
             width: 100px;
+            text-align: right;
         }
 
         .col3 {
             width: 200px;
+            text-align: right;
         }
     </style>
 </head>
@@ -51,8 +53,8 @@
     {{- if ne $.Prefix "/"}}
         <tr style="line-height: 1.2;font-size: 12px;">
             <td><a href="..">返回上级..</a></td>
-            <td> -</td>
-            <td> -</td>
+            <td></td>
+            <td></td>
         </tr>
     {{- end}}
     {{- range .FileList}}
