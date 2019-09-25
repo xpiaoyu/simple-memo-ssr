@@ -75,7 +75,7 @@ var ArticleList ArticlePointArray
 var ArticleMap map[string]*Article
 var tpl *template.Template
 var rootPath string
-var fileSizeLevel = []string{"B", "KB", "MB", "GB", "TB"}
+var fileSizeLevel = []string{"", "K", "M", "G", "T"}
 
 func init() {
 	rootPath = filepath.Dir(os.Args[0])
@@ -220,7 +220,11 @@ func getFileSizeString(size int64) string {
 			break
 		}
 	}
-	return fmt.Sprintf("%.1f%s", sizeF, fileSizeLevel[level])
+	if level == 0 {
+		return fmt.Sprintf("%.0f", sizeF)
+	} else {
+		return fmt.Sprintf("%.1f%s", sizeF, fileSizeLevel[level])
+	}
 }
 
 func getDir(c *fasthttp.RequestCtx) {
@@ -301,6 +305,8 @@ func getArticle(c *fasthttp.RequestCtx) {
 		articleId = id.(string)
 	} else {
 		articleId = b2s(c.QueryArgs().Peek("id"))
+		c.Redirect(string(c.Path())+"/"+articleId, 301)
+		return
 	}
 	articleId = strings.Replace(articleId, "..", "", -1)
 
