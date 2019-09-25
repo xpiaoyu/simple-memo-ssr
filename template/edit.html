@@ -14,39 +14,20 @@
         <h1>Simple example</h1>
     </header>
     <div id="test-editormd">
-                <textarea style="display:none;">[TOC]
+                <textarea style="display:none;"># 测试
 
-#### Disabled options
+参数 | 示例值 | 参数描述
+--- | --- | ---
+productId | IF | 产品ID 如: IF, IC, IH, TS, TF, T
+date| 2019-7-5 | 交易日期
 
-- TeX (Based on KaTeX);
-- Emoji;
-- Task lists;
-- HTML tags decode;
-- Flowchart and Sequence Diagram;
-
-#### Editor.md directory
-
-    editor.md/
-            lib/
-            css/
-            scss/
-            tests/
-            fonts/
-            images/
-            plugins/
-            examples/
-            languages/     
-            editormd.js
-            ...
-
-```html
-&lt;!-- English --&gt;
-&lt;script src="../dist/js/languages/en.js"&gt;&lt;/script&gt;
-
-&lt;!-- 繁體中文 --&gt;
-&lt;script src="../dist/js/languages/zh-tw.js"&gt;&lt;/script&gt;
-```
-</textarea>
+```go
+t.Timestamp = fi.ModTime().UnixNano() / 1e6
+	sort.Sort(ArticleList)
+if _, err := c.WriteString("success"); err != nil {
+	log.Println("[ERROR]", err)
+}
+```</textarea>
     </div>
 </div>
 <script src="http://editor.md.ipandao.com/examples/js/jquery.min.js"></script>
