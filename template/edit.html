@@ -5,53 +5,55 @@
     <meta name="renderer" content="webkit"/>
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"/>
     <title>Markdown Editor</title>
-    <link rel="stylesheet" href="http://editor.md.ipandao.com/examples/css/style.css"/>
-    <link rel="stylesheet" href="../assets/editor/css/editormd.css"/>
+    <link rel="stylesheet" href="/assets/editor/style.css"/>
+    <link rel="stylesheet" href="/assets/editor/css/editormd.css"/>
 </head>
 <body>
 <div id="layout">
     <header>
-        <h1>Simple example</h1>
+        <h3>文件：<a style="text-decoration: none;" target="_blank" href="/get{{.Path}}">
+                <span id="path">根目录{{.Path}}</span>
+            </a>
+            <input type="submit" id="submitBtn" name="submit" value="保存 Save" style="padding: 5px;">
+        </h3>
     </header>
     <div id="test-editormd">
-                <textarea style="display:none;"># 测试
-
-参数 | 示例值 | 参数描述
---- | --- | ---
-productId | IF | 产品ID 如: IF, IC, IH, TS, TF, T
-date| 2019-7-5 | 交易日期
-
-```go
-t.Timestamp = fi.ModTime().UnixNano() / 1e6
-	sort.Sort(ArticleList)
-if _, err := c.WriteString("success"); err != nil {
-	log.Println("[ERROR]", err)
-}
-```</textarea>
+        <textarea id="md" style="display:none;">{{.Markdown}}</textarea>
     </div>
 </div>
-<script src="http://editor.md.ipandao.com/examples/js/jquery.min.js"></script>
-<script src="../assets/editor/editormd.min.js"></script>
+<script src="/assets/editor/jquery.min.js"></script>
+<script src="/assets/editor/editormd.min.js"></script>
 <script type="text/javascript">
     var testEditor;
-
+    var path = '{{.Path}}';
+    var original = $('#md').val();
+    console.log('original:', original);
     $(function () {
         testEditor = editormd("test-editormd", {
             width: "90%",
-            height: 640,
+            height: "85%",
             syncScrolling: "single",
-            path: "../assets/editor/lib/"
+            path: "/assets/editor/lib/"
         });
-
-        /*
-        // or
-        testEditor = editormd({
-            id      : "test-editormd",
-            width   : "90%",
-            height  : 640,
-            path    : "../lib/"
+        setInterval(function () {
+            if (testEditor.getMarkdown() !== original) {
+                $('#path').css('background', 'red');
+            } else {
+                $('#path').css('background', '#00C000');
+            }
+        }, 1000);
+        window.onbeforeunload = function () {
+            return '确认关闭';
+        };
+    });
+    $('#submitBtn').on('click', function () {
+        console.log(testEditor.getMarkdown());
+        $.post('/post', {path: path, markdown: testEditor.getMarkdown()}, function (data) {
+            console.log('resp:', data);
+            if (data === 'ok') {
+                original = testEditor.getMarkdown();
+            }
         });
-        */
     });
 </script>
 </body>
