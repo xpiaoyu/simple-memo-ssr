@@ -19,12 +19,12 @@ const (
 	FasthttpAddr       = ":8083"
 	RouteIndex         = "/"
 	RouteDir           = "/dir/*path"
-	RouteArticleList   = "/list"
 	RouteGetArticle    = "/get/*id"
 	RouteGetArticleOld = "/get"
 	RoutePostArticle   = "/post"
 	RouteCreateArticle = "/create"
-	RouteAssets        = "/assets/:p"
+	RouteAssets        = "/assets/*p"
+	RouteEdit          = "/edit/*p"
 	ContentTypeJson    = "application/json"
 	ContentTypeHtml    = "text/html"
 )
@@ -59,6 +59,11 @@ type FileAndDir struct {
 type TplIndex struct {
 	FileList []FileAndDir
 	Prefix   string
+}
+
+type TplEdit struct {
+	Markdown template.HTML
+	Path     string
 }
 
 func (c ArticlePointArray) Len() int {
@@ -97,10 +102,14 @@ func main() {
 	router.GET(RouteGetArticle, getArticle)
 	// Compatible with old router
 	router.GET(RouteGetArticleOld, getArticle)
-	// Show article directory
+	// Show index article directory
 	router.GET(RouteIndex, getDir)
-	//
+	// Show article directory
 	router.GET(RouteDir, getDir)
+	// Edit markdown
+	router.GET(RouteEdit, editHandler)
+	// Post markdown
+	router.POST(RoutePostArticle, postHandler)
 
 	/*firstHandler := func(c *fasthttp.RequestCtx) {
 		c.Response.Header.Add("Access-Control-Allow-Origin", "*")
@@ -125,6 +134,46 @@ func main() {
 		}
 	}*/
 	log.Fatal(fasthttp.ListenAndServe(FasthttpAddr, router.Handler))
+}
+
+func postHandler(c *fasthttp.RequestCtx) {
+	path := c.FormValue("path")
+	md := c.FormValue("markdown")
+	log.Println("[I] 修改文件path:", string(path))
+	filename := "article" + b2s(path)
+	if err := ioutil.WriteFile(filename, md, os.ModePerm); err != nil {
+		c.SetStatusCode(fasthttp.StatusInternalServerError)
+		log.Println("[E]", err)
+		return
+	}
+	if _, err := c.WriteString("ok"); err != nil {
+		log.Println("[E]", err)
+	}
+}
+
+func editHandler(c *fasthttp.RequestCtx) {
+	p := c.UserValue("p")
+	if p == nil {
+		c.SetStatusCode(fasthttp.StatusBadRequest)
+		return
+	}
+	path := p.(string)
+	path = strings.Replace(path, "..", "", -1)
+	md, err := getMarkdown("article" + path)
+	if err != nil {
+		if _, err = c.WriteString("404 Not Found"); err != nil {
+			log.Println("[E]")
+		}
+		c.SetStatusCode(fasthttp.StatusNotFound)
+		return
+	}
+	c.SetContentType(ContentTypeHtml)
+	if err := tpl.ExecuteTemplate(c, "edit.html", TplEdit{
+		Markdown: template.HTML(md),
+		Path:     path,
+	}); err != nil {
+		log.Println("[ERROR]", err)
+	}
 }
 
 func createArticle(c *fasthttp.RequestCtx) {
@@ -311,7 +360,7 @@ func getArticle(c *fasthttp.RequestCtx) {
 	articleId = strings.Replace(articleId, "..", "", -1)
 
 	key := c.QueryArgs().Peek("k")
-	log.Println("article id:", articleId, "key:", b2s(key))
+	log.Println("[I] article id:", articleId, "key:", b2s(key))
 	//article, ok := ArticleMap[articleId]
 	//if !ok {
 	//	c.SetStatusCode(fasthttp.StatusNotFound)
@@ -320,7 +369,7 @@ func getArticle(c *fasthttp.RequestCtx) {
 	//	}
 	//	return
 	//}
-	_, html, err := getMarkdownAndHtml("article" + articleId)
+	html, err := getHtml("article" + articleId)
 	if err != nil {
 		log.Println("[ERROR]", err)
 	}
@@ -347,7 +396,7 @@ func scanArticleDir() {
 	}
 	for _, v := range files {
 		if strings.HasSuffix(v.Name(), ".md") {
-			log.Println("Article name:", v.Name())
+			log.Println("[I] Article name:", v.Name())
 			t := new(Article)
 			t.Id = strings.Replace(v.Name(), ".md", "", -1)
 			if len(t.Id) < 1 {
@@ -355,12 +404,12 @@ func scanArticleDir() {
 				os.Exit(1)
 			}
 			t.Timestamp = v.ModTime().UnixNano() / 1e6
-			md, html, err := getMarkdownAndHtml("article/" + v.Name())
+			html, err := getHtml("article/" + v.Name())
 			if err != nil {
 				log.Println("[error] getSummaryAndMarkdown err:", err)
 				os.Exit(1)
 			}
-			t.Markdown = b2s(md)
+			t.Markdown = b2s(html)
 			t.Html = html
 			ArticleList = append(ArticleList, t)
 			ArticleMap[t.Id] = t
@@ -371,23 +420,29 @@ func scanArticleDir() {
 	return
 }
 
-func getMarkdownAndHtml(filename string) (markdown []byte, html []byte, err error) {
+func getMarkdown(filename string) (markdown []byte, err error) {
+	markdown, err = ioutil.ReadFile(filename)
+	if err != nil {
+		log.Println("[E] 读取文件失败", err)
+		return
+	}
+	log.Println("[I] 读取", filename, "成功")
+	return
+}
+
+func getHtml(filename string) (html []byte, err error) {
 	b := cacheGet(filename)
 	if b != nil {
 		// Hit cache
-		markdown = b
 		html = b
 		return
 	}
-	bytes, err := ioutil.ReadFile(filename)
+	markdown, err := getMarkdown(filename)
 	if err != nil {
-		log.Println("[ERROR]", "读取", filename, "失败")
+		log.Printf("[E] 读取失败 name:%s error:%s", filename, err)
 		return
 	}
-	log.Println("读取", filename, "成功")
-	//markdown = string(bytes)
-	markdown = bytes
-	html = MarkdownToHtml(bytes)
+	html = MarkdownToHtml(markdown)
 	cacheSet(filename, html, 5*1000)
 	return
 }
