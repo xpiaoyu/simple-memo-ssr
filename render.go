@@ -102,7 +102,8 @@ func HighlightKeyword(html string, key string) string {
 }
 
 func HighlightKeywordBytes(html []byte, key []byte) []byte {
-	htmlData := html
+	htmlData := make([]byte, len(html))
+	copy(htmlData, html)
 	keyRune := key
 	htmlLen := len(htmlData)
 	keyLen := len(keyRune)
