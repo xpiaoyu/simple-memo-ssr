@@ -15,7 +15,7 @@ func MarkdownToHtml(md []byte) []byte {
 	md = bytes.Replace(md, []byte("\r"), nil, -1)
 	baseRenderer := blackfriday.NewHTMLRenderer(
 		blackfriday.HTMLRendererParameters{
-			Flags:                      blackfriday.FootnoteReturnLinks | blackfriday.CommonHTMLFlags,
+			Flags:                      blackfriday.TOC | blackfriday.FootnoteReturnLinks | blackfriday.CommonHTMLFlags,
 			FootnoteReturnLinkContents: "<sup>返回</sup>",
 		})
 	chromaRenderer := bfchroma.NewRenderer(bfchroma.ChromaStyle(myGitHub), bfchroma.Extend(baseRenderer))
