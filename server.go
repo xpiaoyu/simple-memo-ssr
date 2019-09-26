@@ -88,7 +88,7 @@ func init() {
 }
 
 func main() {
-	log.Println("Root path:", rootPath)
+	log.Println("[I] Root path:", rootPath)
 	ArticleMap = make(map[string]*Article)
 	scanArticleDir()
 	router := fasthttprouter.New()
@@ -287,7 +287,7 @@ func getDir(c *fasthttp.RequestCtx) {
 		return
 	}
 	p = strings.Replace(p, "..", "", -1)
-	log.Println("Path:", p)
+	log.Println("[I] Path:", p)
 	c.SetContentType(ContentTypeHtml)
 	fl, err := listDirectory(p)
 	if err != nil {
@@ -416,7 +416,7 @@ func scanArticleDir() {
 		}
 	}
 	sort.Sort(ArticleList)
-	log.Println("Scan article directory successfully")
+	log.Println("[I] Scan article directory successfully")
 	return
 }
 

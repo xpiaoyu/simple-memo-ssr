@@ -17,7 +17,7 @@ var l sync.RWMutex
 func init() {
 	m = make(map[string]cacheEntry)
 	go cleaner()
-	log.Print("[INFO] Cache module loaded.")
+	log.Print("[I] Cache module loaded.")
 }
 
 func cleaner() {
