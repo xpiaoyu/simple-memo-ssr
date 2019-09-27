@@ -52,9 +52,7 @@
     <tbody>
     {{- if ne $.Prefix "/"}}
         <tr style="line-height: 1.2;font-size: 12px;">
-            <td><a href="..">返回上级..</a></td>
-            <td></td>
-            <td></td>
+            <td style="background: white;"><a href="..">返回上级..</a></td>
         </tr>
     {{- end}}
     {{- range .FileList}}
@@ -72,7 +70,31 @@
             </tr>
         {{- end}}
     {{- end}}
+    <tr style="line-height: 1.2;font-size: 12px;">
+        <td style="background: white;"><span id="addArticle" style="cursor: pointer;color: blue;">[+]</span></td>
+    </tr>
     </tbody>
 </table>
+<script src="/assets/editor/jquery.min.js"></script>
+<script type="text/javascript">
+    var path = "{{.Prefix}}";
+    $(function () {
+        console.log(path);
+        $('#addArticle').on('click', function () {
+            var title = window.prompt("输入文档名：");
+            if (!title || title.length < 1) return;
+            $.post('/create', {title: title, path: path}, function (data) {
+                console.log('resp:', data);
+                if (data === 'ok') {
+                    alert('创建成功！');
+                } else if (data === 'existed') {
+                    alert('文件已存在！');
+                } else {
+                    alert(data);
+                }
+            });
+        });
+    });
+</script>
 </body>
 </html>

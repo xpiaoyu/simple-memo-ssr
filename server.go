@@ -110,6 +110,8 @@ func main() {
 	router.GET(RouteEdit, editHandler)
 	// Post markdown
 	router.POST(RoutePostArticle, postHandler)
+	// Create new markdown
+	router.POST(RouteCreateArticle, createHandler)
 
 	/*firstHandler := func(c *fasthttp.RequestCtx) {
 		c.Response.Header.Add("Access-Control-Allow-Origin", "*")
@@ -176,56 +178,46 @@ func editHandler(c *fasthttp.RequestCtx) {
 	}
 }
 
-func createArticle(c *fasthttp.RequestCtx) {
-	if string(c.Method()) == "OPTIONS" {
+func createHandler(c *fasthttp.RequestCtx) {
+	/*if string(c.Method()) == "OPTIONS" {
 		c.SetStatusCode(204)
 		c.Response.Header.Set("access-control-allow-headers", "content-type")
 		return
-	}
-	t := new(struct {
-		Id string `json:"id"`
-	})
-	if err := json.Unmarshal(c.PostBody(), t); err != nil {
-		c.SetStatusCode(fasthttp.StatusInternalServerError)
-		log.Println(err)
-	}
-	articleId := t.Id
+	}*/
+	t := c.FormValue("title")
+	p := c.FormValue("path")
+	articleId := string(t)
+	articleId = strings.Replace(articleId, "..", "", -1)
+	path := string(p)
+	path = strings.Replace(path, "..", "", -1)
 	if len(articleId) < 1 {
 		c.SetStatusCode(400)
-		if _, err := c.WriteString("article id invalid"); err != nil {
-			log.Println("[ERROR]", err)
+		if _, err := c.WriteString("Invalid title."); err != nil {
+			log.Println("[E]", err)
 		}
 		return
 	}
-	filename := "article/" + articleId + ".md"
+	filename := "article/" + path + "/" + articleId + ".md"
 	if canCreateFile(filename) {
-		a := new(Article)
-		a.Id = articleId
-		a.Markdown = "# " + articleId + "\n"
-		err := ioutil.WriteFile(filename, []byte(a.Markdown), os.ModePerm)
+		err := ioutil.WriteFile(filename, []byte(articleId), os.ModePerm)
 		if err != nil {
-			log.Println("[error] can't write file err msg:", err)
+			log.Println("[E] can't write file err msg:", err)
 			c.SetStatusCode(fasthttp.StatusInternalServerError)
 			return
 		}
-		fi, err := os.Stat(filename)
+		_, err = os.Stat(filename)
 		if err != nil {
 			c.SetStatusCode(fasthttp.StatusInternalServerError)
 			log.Println(err)
 			return
 		}
-		a.Timestamp = fi.ModTime().UnixNano() / 1e6
-		ArticleMap[articleId] = a
-		ArticleList = append(ArticleList, a)
-		sort.Sort(ArticleList)
-		c.SetStatusCode(fasthttp.StatusOK)
-		if _, err := c.WriteString("success"); err != nil {
-			log.Println("[ERROR]", err)
+		if _, err := c.WriteString("ok"); err != nil {
+			log.Println("[E]", err)
 		}
 	} else {
 		c.SetStatusCode(fasthttp.StatusOK)
 		if _, err := c.WriteString("existed"); err != nil {
-			log.Println("[ERROR]", err)
+			log.Println("[E]", err)
 		}
 	}
 }
