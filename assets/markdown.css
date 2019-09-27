@@ -195,8 +195,10 @@ pre > code {
 }
 
 pre {
+	tab-size: 4;
     padding: 16px;
     overflow: auto;
+    word-wrap: normal;
     font-size: 85%;
     line-height: 1.45;
     background-color: #f6f8fa;
