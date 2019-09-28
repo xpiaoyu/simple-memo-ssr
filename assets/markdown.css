@@ -125,7 +125,7 @@ ul li ul:first-of-type,
 ol li ol:first-of-type,
 ul li ol:first-of-type,
 ol li ul:first-of-type {
-    margin-top: 0px;
+    margin-top: 0;
 }
 
 ul ul, ul ol, ol ol, ol ul {
@@ -149,11 +149,11 @@ dl dt:first-child {
 }
 
 dl dt > :first-child {
-    margin-top: 0px;
+    margin-top: 0;
 }
 
 dl dt > :last-child {
-    margin-bottom: 0px;
+    margin-bottom: 0;
 }
 
 dl dd {
@@ -162,11 +162,11 @@ dl dd {
 }
 
 dl dd > :first-child {
-    margin-top: 0px;
+    margin-top: 0;
 }
 
 dl dd > :last-child {
-    margin-bottom: 0px;
+    margin-bottom: 0;
 }
 
 /* CODE
@@ -178,12 +178,12 @@ pre, code, tt {
 }
 
 code, tt {
-    margin: 0 0;
-    padding: 2px 3px;
-    border: 1px solid #e1e1e8;
-    background-color: #f7f7f9;
-    border-radius: 3px;
-    color: #d14;
+    padding: 2px 4px;
+    font-size: 90%;
+    color: #c7254e;
+    white-space: normal;
+    background-color: #f9f2f4;
+    border-radius: 4px;
 }
 
 pre > code {
@@ -238,11 +238,11 @@ blockquote {
 }
 
 blockquote > :first-child {
-    margin-top: 0px;
+    margin-top: 0;
 }
 
 blockquote > :last-child {
-    margin-bottom: 0px;
+    margin-bottom: 0;
 }
 
 /* HORIZONTAL RULES
