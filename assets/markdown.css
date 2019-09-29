@@ -196,6 +196,7 @@ pre > code {
 
 pre {
 	tab-size: 4;
+    -moz-tab-size: 4;
     padding: 16px;
     overflow: auto;
     word-wrap: normal;
