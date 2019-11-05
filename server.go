@@ -135,6 +135,7 @@ func main() {
 			}
 		}
 	}*/
+	log.Printf("Running on %s", FasthttpAddr)
 	log.Fatal(fasthttp.ListenAndServe(FasthttpAddr, router.Handler))
 }
 

@@ -131,6 +131,7 @@ func HighlightKeywordBytes(html []byte, key []byte) []byte {
 			}
 			if htmlData[i] == '<' {
 				state = 1
+				matchLen = 0
 			} else if byteEqualIgnoreCase(htmlData[i], keyRune[matchLen]) {
 				matchLen++
 				if matchLen >= keyLen {
