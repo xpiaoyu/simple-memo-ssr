@@ -16,7 +16,8 @@ import (
 )
 
 const (
-	FasthttpAddr       = ":8083"
+	//FasthttpAddr       = ":8084" // 腾讯云环境
+	FasthttpAddr       = ":8083" // 本地环境
 	RouteIndex         = "/"
 	RouteDir           = "/dir/*path"
 	RouteGetArticle    = "/get/*id"
