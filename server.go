@@ -55,6 +55,7 @@ type FileAndDir struct {
 	IsDir   bool
 	ModTime string
 	Size    string
+	mod     int64
 }
 
 type TplIndex struct {
@@ -67,6 +68,18 @@ type TplEdit struct {
 	Path     string
 }
 
+type FileDirList []FileAndDir
+
+func (c FileDirList) Len() int {
+	return len(c)
+}
+func (c FileDirList) Swap(i, j int) {
+	c[i], c[j] = c[j], c[i]
+}
+func (c FileDirList) Less(i, j int) bool {
+	return c[i].mod > c[j].mod
+}
+
 func (c ArticlePointArray) Len() int {
 	return len(c)
 }
@@ -74,7 +87,7 @@ func (c ArticlePointArray) Swap(i, j int) {
 	c[i], c[j] = c[j], c[i]
 }
 func (c ArticlePointArray) Less(i, j int) bool {
-	return c[i].Timestamp > c[j].Timestamp
+	return c[i].Timestamp < c[j].Timestamp
 }
 
 var ArticleList ArticlePointArray
@@ -245,9 +258,11 @@ func listDirectory(path string) (ret []FileAndDir, err error) {
 				IsDir:   v.IsDir(),
 				ModTime: v.ModTime().Format("2006-01-02 15:04"),
 				Size:    getFileSizeString(v.Size()),
+				mod:     v.ModTime().Unix(),
 			})
 		}
 	}
+	sort.Sort(FileDirList(ret))
 	ret = append(dir, ret...)
 	return
 }
