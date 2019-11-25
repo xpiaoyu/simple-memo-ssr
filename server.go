@@ -368,6 +368,13 @@ func getArticle(c *fasthttp.RequestCtx) {
 	}
 	articleId = strings.Replace(articleId, "..", "", -1)
 
+	if !strings.HasSuffix(strings.ToLower(articleId), ".md") {
+		// Target don't have a .md suffix which means
+		// the file is not a markdown document.
+		c.SendFile("article" + articleId)
+		return
+	}
+
 	key := c.QueryArgs().Peek("k")
 	log.Println("[I] article id:", articleId, "key:", b2s(key))
 	//article, ok := ArticleMap[articleId]
