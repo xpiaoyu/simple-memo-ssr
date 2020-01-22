@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/buaazp/fasthttprouter"
 	"github.com/valyala/fasthttp"
@@ -9,6 +10,7 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
+	"path"
 	"path/filepath"
 	"sort"
 	"strings"
@@ -16,14 +18,15 @@ import (
 )
 
 const (
-	//FasthttpAddr       = ":8084" // 腾讯云环境
-	FasthttpAddr       = ":8083" // 本地环境
+	FasthttpAddr = ":8084" // 腾讯云环境
+	//FasthttpAddr       = ":8083" // 本地环境
 	RouteIndex         = "/"
 	RouteDir           = "/dir/*path"
 	RouteGetArticle    = "/get/*id"
 	RouteGetArticleOld = "/get"
 	RoutePostArticle   = "/post"
 	RouteCreateArticle = "/create"
+	RouteRename        = "/rename"
 	RouteAssets        = "/assets/*p"
 	RouteEdit          = "/edit/*p"
 	ContentTypeJson    = "application/json"
@@ -126,6 +129,8 @@ func main() {
 	router.POST(RoutePostArticle, postHandler)
 	// Create new markdown
 	router.POST(RouteCreateArticle, createHandler)
+	// Rename a file
+	router.POST(RouteRename, renameHandler)
 
 	/*firstHandler := func(c *fasthttp.RequestCtx) {
 		c.Response.Header.Add("Access-Control-Allow-Origin", "*")
@@ -165,6 +170,57 @@ func postHandler(c *fasthttp.RequestCtx) {
 	}
 	if _, err := c.WriteString("ok"); err != nil {
 		log.Println("[E]", err)
+	}
+}
+
+func renameHandler(c *fasthttp.RequestCtx) {
+	newName := string(c.FormValue("newName"))
+	filePath := string(c.FormValue("file"))
+	log.Printf("newName=%s filePath=%s", newName, filePath)
+
+	safePath, err := getSafeFilePath(filePath)
+	if err != nil {
+		log.Printf("[E] 获取safeFilePath失败 error=%s", err.Error())
+		c.SetStatusCode(fasthttp.StatusBadRequest)
+		if _, err = c.WriteString("Bad Request error=" + err.Error()); err != nil {
+			log.Println("[E]", err.Error())
+		}
+		return
+	}
+	safeNewName, err := getSafeFilePath(newName)
+	if err != nil {
+		log.Printf("[E] 获取safeNewName失败 error=%s", err.Error())
+		c.SetStatusCode(fasthttp.StatusBadRequest)
+		if _, err = c.WriteString("Bad Request error=" + err.Error()); err != nil {
+			log.Println("[E]", err.Error())
+		}
+		return
+	}
+
+	err = os.Rename(safePath, safeNewName)
+	if err != nil {
+		log.Println("[E]", err.Error())
+		c.SetStatusCode(fasthttp.StatusInternalServerError)
+		if _, err = c.WriteString("Internal Server Error error=" + err.Error()); err != nil {
+			log.Println("[E]", err.Error())
+		}
+		return
+	}
+
+	if _, err := c.WriteString("ok"); err != nil {
+		log.Println("[E]", err)
+		return
+	}
+}
+
+func getSafeFilePath(filename string) (safePath string, err error) {
+	p := path.Join("article", filename)
+	if strings.HasPrefix(p, "article/") {
+		safePath = p
+		return
+	} else {
+		err = errors.New("非法的路径")
+		return
 	}
 }
 

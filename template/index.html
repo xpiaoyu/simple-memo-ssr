@@ -27,8 +27,9 @@
         }
 
         .col1 {
-            width: 500px;
-            font-family: 'Microsoft YaHei', serif;
+            width: 320px;
+            font-size: 15px;
+            font-family: 'Microsoft YaHei', sans-serif;
         }
 
         .col2 {
@@ -40,8 +41,17 @@
 
         .col3 {
             width: 200px;
+            min-width: 42px;
             text-align: right;
             font-size: 15px;
+            line-height: 1;
+        }
+
+        .col4 {
+            min-width: 35px;
+            width: 60px;
+            text-align: right;
+            font-size: 12px;
             line-height: 1;
         }
     </style>
@@ -53,6 +63,7 @@
         <th class="col1">名称</th>
         <th class="col2">大小</th>
         <th class="col3">修改时间</th>
+        <th class="col4">操作</th>
     </tr>
     </thead>
     <tbody>
@@ -67,17 +78,20 @@
                 <td class="col1"><a href="/dir{{$.Prefix}}{{.Name}}/">{{.Name}}/</a></td>
                 <td class="col2"> -</td>
                 <td class="col3">{{.ModTime}}</td>
+                <td class="col4">-</td>
             </tr>
         {{- else}}
             <tr>
                 <td class="col1"><a href="/get{{$.Prefix}}{{.Name}}">{{.Name}}</a></td>
                 <td class="col2">{{.Size}}</td>
                 <td class="col3">{{.ModTime}}</td>
+                <td class="col4">[<a title="Edit" href="/edit{{$.Prefix}}{{.Name}}">E</a>][<a title="Rename" href="#" data-path="{{$.Prefix}}{{.Name}}" class="rename">R</a>][<a href="#">D</a>]
+                </td>
             </tr>
         {{- end}}
     {{- end}}
     <tr style="line-height: 1.2;font-size: 12px;">
-        <td style="background: white;"><span id="addArticle" style="cursor: pointer;color: blue;">[+]</span></td>
+        <td style="background: white;">[<a href="#" id="addArticle">+</a>]</td>
     </tr>
     </tbody>
 </table>
@@ -93,8 +107,27 @@
                 console.log('resp:', data);
                 if (data === 'ok') {
                     alert('创建成功！');
+                    window.location.reload();
                 } else if (data === 'existed') {
                     alert('文件已存在！');
+                } else {
+                    alert(data);
+                }
+            });
+        });
+        $('.rename').on('click', function () {
+            var newName = window.prompt("输入新文件名：");
+            var filename = $(this).data('path');
+            console.log('newName', newName);
+            if (newName === null) {
+                return;
+            }
+            newName = path + newName;
+            $.post('/rename', {file: filename, newName: newName}, function (data) {
+                console.log('resp:', data);
+                if (data === 'ok') {
+                    alert('修改成功！');
+                    window.location.reload();
                 } else {
                     alert(data);
                 }
