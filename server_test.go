@@ -7,16 +7,6 @@ import (
 	"time"
 )
 
-func BenchmarkGetMarkdownAndHtml(b *testing.B) {
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		if _, _, err := getMarkdownAndHtml("article/warehouse.md"); err != nil {
-			b.Error(err)
-		}
-	}
-	b.StopTimer()
-}
-
 func BenchmarkMd5(b *testing.B) {
 	data := []byte("test")
 	b.Logf("%X", md5.Sum(data))

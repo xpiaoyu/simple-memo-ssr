@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+    <meta charset="UTF-8">
+    <title>{{.Keyword}} - 搜索结果</title>
+    <style type="text/css">
+        .main {
+            max-width: 960px;
+            margin: auto;
+        }
+
+        table {
+            word-break: break-all;
+            font-size: 18px;
+            font-family: Consolas, monospace;
+            width: 100%;
+        }
+
+        th {
+            text-align: left;
+            background: beige;
+            padding: 5px 10px;
+        }
+
+        tr {
+            line-height: 1.5;
+        }
+
+        td {
+            background: whitesmoke;
+            padding: 5px 10px;
+        }
+
+        .col1 {
+            width: 40%;
+            min-width: 80px;
+            font-size: 15px;
+            font-family: 'Microsoft YaHei', sans-serif;
+        }
+
+        .col2 {
+            width: 60%;
+            min-width: 40px;
+            font-size: 12px;
+            font-family: 'Microsoft YaHei', sans-serif;
+        }
+
+        .col3 {
+            width: 150px;
+            min-width: 50px;
+            text-align: right;
+            font-size: 15px;
+            line-height: 1;
+        }
+
+        .col4 {
+            min-width: 60px;
+            width: 70px;
+            text-align: right;
+            font-size: 12px;
+            line-height: 1;
+        }
+    </style>
+</head>
+<body>
+
+<div class="main">
+    <div style="margin: 5px;text-align: right;">
+        <label title="abc">
+            <input style="width: 30%;font-size: 16px;" id="searchInput" value="{{.Keyword}}"/>
+        </label>
+        <button style="font-size: 16px;" id="searchBtn">搜索</button>
+    </div>
+    <table>
+        <thead>
+        <tr>
+            <th class="col1">名称</th>
+            <th class="col2">上下文</th>
+        </tr>
+        </thead>
+        <tbody>
+        {{- range .Result}}
+            <tr>
+                <td class="col1"><a href="/get{{.Filename}}?k={{$.Keyword}}">根目录{{.Filename}}</a></td>
+                <td class="col2">...{{.Context}}...</td>
+            </tr>
+        {{- end}}
+        </tbody>
+    </table>
+</div>
+<script src="/assets/editor/jquery.min.js"></script>
+<script type="text/javascript">
+    $('#searchBtn').on('click', function () {
+        window.location = '/search?kw=' + $('#searchInput').val();
+    });
+    $('#searchInput').on('keydown', function (e) {
+        if (e.keyCode === 13) {
+            $('#searchBtn').click();
+        }
+    });
+</script>
+</body>
+</html>

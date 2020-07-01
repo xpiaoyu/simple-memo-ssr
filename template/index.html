@@ -5,10 +5,16 @@
     <meta charset="UTF-8">
     <title>根目录{{.Prefix}}</title>
     <style type="text/css">
+        .main {
+            max-width: 960px;
+            margin: auto;
+        }
+
         table {
             word-break: break-all;
             font-size: 18px;
             font-family: Consolas, monospace;
+            width: 100%;
         }
 
         th {
@@ -27,7 +33,7 @@
         }
 
         .col1 {
-            width: 150px;
+            width: 300px;
             min-width: 80px;
             font-size: 15px;
             font-family: 'Microsoft YaHei', sans-serif;
@@ -59,44 +65,56 @@
     </style>
 </head>
 <body>
-<table>
-    <thead>
-    <tr>
-        <th class="col1">名称</th>
-        <th class="col2">大小</th>
-        <th class="col3">修改时间</th>
-        <th class="col4">操作</th>
-    </tr>
-    </thead>
-    <tbody>
-    {{- if ne $.Prefix "/"}}
-        <tr style="line-height: 1.2;font-size: 12px;">
-            <td style="background: white;"><a href="..">返回上级..</a></td>
+<div class="main">
+    <div style="margin: 5px;text-align: right;">
+        <label title="abc">
+            <input style="width: 30%;font-size: 16px;" id="searchInput"/>
+        </label>
+        <button style="font-size: 16px;" id="searchBtn">搜索</button>
+    </div>
+    <table>
+        <thead>
+        <tr>
+            <th class="col1">名称</th>
+            <th class="col2">大小</th>
+            <th class="col3">修改时间</th>
+            <th class="col4">操作</th>
         </tr>
-    {{- end}}
-    {{- range .FileList}}
-        {{- if .IsDir}}
-            <tr>
-                <td class="col1"><a href="/dir{{$.Prefix}}{{.Name}}/">{{.Name}}/</a></td>
-                <td class="col2"> -</td>
-                <td class="col3">{{.ModTime}}</td>
-                <td class="col4">-</td>
-            </tr>
-        {{- else}}
-            <tr>
-                <td class="col1"><a href="/get{{$.Prefix}}{{.Name}}">{{.Name}}</a></td>
-                <td class="col2">{{.Size}}</td>
-                <td class="col3">{{.ModTime}}</td>
-                <td class="col4">[<a title="Edit" href="/edit{{$.Prefix}}{{.Name}}">E</a>][<a title="Rename" href="#" data-path="{{$.Prefix}}{{.Name}}" class="rename">R</a>][<a href="#">D</a>]
-                </td>
+        </thead>
+        <tbody>
+        {{- if ne $.Prefix "/"}}
+            <tr style="line-height: 1.2;font-size: 12px;">
+                <td style="background: white;"><a href="..">返回上级..</a></td>
             </tr>
         {{- end}}
-    {{- end}}
-    <tr style="line-height: 1.2;font-size: 12px;">
-        <td style="background: white;">[<a href="#" id="addArticle">+</a>]</td>
-    </tr>
-    </tbody>
-</table>
+        {{- range .FileList}}
+            {{- if .IsDir}}
+                <tr>
+                    <td class="col1"><a href="/dir{{$.Prefix}}{{.Name}}/">{{.Name}}/</a></td>
+                    <td class="col2"> -</td>
+                    <td class="col3">{{.ModTime}}</td>
+                    <td class="col4">-</td>
+                </tr>
+            {{- else}}
+                <tr>
+                    <td class="col1"><a href="/get{{$.Prefix}}{{.Name}}">{{.Name}}</a></td>
+                    <td class="col2">{{.Size}}</td>
+                    <td class="col3">{{.ModTime}}</td>
+                    <td class="col4">[<a title="Edit" href="/edit{{$.Prefix}}{{.Name}}">E</a>][<a title="Rename"
+                                                                                                  href="#"
+                                                                                                  data-path="{{$.Prefix}}{{.Name}}"
+                                                                                                  class="rename">R</a>][<a
+                                href="#">D</a>]
+                    </td>
+                </tr>
+            {{- end}}
+        {{- end}}
+        <tr style="line-height: 1.2;font-size: 12px;">
+            <td style="background: white;">[<a href="#" id="addArticle">+</a>]</td>
+        </tr>
+        </tbody>
+    </table>
+</div>
 <script src="/assets/editor/jquery.min.js"></script>
 <script type="text/javascript">
     var path = "{{.Prefix}}";
@@ -134,6 +152,14 @@
                     alert(data);
                 }
             });
+        });
+        $('#searchBtn').on('click', function () {
+            window.location = '/search?kw=' + $('#searchInput').val();
+        });
+        $('#searchInput').on('keydown', function (e) {
+            if (e.keyCode === 13) {
+                $('#searchBtn').click();
+            }
         });
     });
 </script>

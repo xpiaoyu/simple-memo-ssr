@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/buaazp/fasthttprouter"
 	"github.com/valyala/fasthttp"
+	"html"
 	"html/template"
 	"io/ioutil"
 	"log"
@@ -14,6 +15,7 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
+	"time"
 	"unicode/utf8"
 )
 
@@ -71,6 +73,16 @@ type TplEdit struct {
 	Path     string
 }
 
+type TplSearch struct {
+	Keyword string
+	Result  []searchResult
+}
+
+type searchResult struct {
+	Filename string
+	Context  template.HTML
+}
+
 type FileDirList []FileAndDir
 
 func (c FileDirList) Len() int {
@@ -107,7 +119,7 @@ func init() {
 func main() {
 	log.Println("[I] Root path:", rootPath)
 	ArticleMap = make(map[string]*Article)
-	scanArticleDir()
+	scanArticleDir("/")
 	router := fasthttprouter.New()
 	// Static files
 	router.GET(RouteAssets, func(c *fasthttp.RequestCtx) {
@@ -131,38 +143,60 @@ func main() {
 	router.POST(RouteCreateArticle, createHandler)
 	// Rename a file
 	router.POST(RouteRename, renameHandler)
+	// Search
+	router.GET("/search", searchHandler)
 
-	/*firstHandler := func(c *fasthttp.RequestCtx) {
-		c.Response.Header.Add("Access-Control-Allow-Origin", "*")
-		switch string(c.Path()) {
-		case RouteAssets:
-			filePath := string(c.QueryArgs().Peek("p"))
-			filePath = strings.Replace(filePath, "..", "", -1)
-			c.SendFile("assets/" + filePath)
-		case RouteArticleList:
-			getArticleList(c)
-		case RouteGetArticle:
-			getArticle(c)
-		case RoutePostArticle:
-			postArticle(c)
-		case RouteCreateArticle:
-			createArticle(c)
-		default:
-			c.SetStatusCode(401)
-			if _, err := c.WriteString("Unrecognized request."); err != nil {
-				log.Println("[ERROR]", err)
-			}
-		}
-	}*/
 	log.Printf("Running on %s", FasthttpAddr)
 	log.Fatal(fasthttp.ListenAndServe(FasthttpAddr, router.Handler))
 }
 
+func searchHandler(c *fasthttp.RequestCtx) {
+	keyword := c.QueryArgs().Peek("kw")
+	if len(keyword) < 2 {
+		_, _ = c.WriteString("Keyword at least 2 bytes.")
+		return
+	}
+	var result []searchResult
+	for _, v := range ArticleList {
+		idx := strings.Index(v.Markdown, strings.ToLower(b2s(keyword)))
+		if idx != -1 {
+			log.Printf("[INFO] 关键词=%s articleId=%s", b2s(keyword), v.Id)
+
+			rIdx := utf8.RuneCount([]byte(v.Markdown[:idx]))
+			rCount := utf8.RuneCount([]byte(v.Markdown))
+			rStart := rIdx - 10
+			if rStart < 0 {
+				rStart = 0
+			}
+			rEnd := rStart + 100
+			if rEnd > rCount {
+				rEnd = rCount
+			}
+
+			context := string([]rune(v.Markdown)[rStart:rEnd])
+
+			result = append(result,
+				searchResult{
+					Filename: v.Id,
+					Context:  template.HTML(b2s(HighlightKeywordBytes([]byte(html.EscapeString(context)), keyword))),
+				})
+		}
+	}
+
+	c.SetContentType(ContentTypeHtml)
+	if err := tpl.ExecuteTemplate(c, "search.html", TplSearch{
+		Keyword: b2s(keyword),
+		Result:  result,
+	}); err != nil {
+		log.Println("[ERROR]", err)
+	}
+}
+
 func postHandler(c *fasthttp.RequestCtx) {
-	path := c.FormValue("path")
+	path_ := c.FormValue("path")
 	md := c.FormValue("markdown")
-	log.Println("[I] 修改文件path:", string(path))
-	filename := "article" + b2s(path)
+	log.Println("[I] 修改文件path:", string(path_))
+	filename := "article" + b2s(path_)
 	if err := ioutil.WriteFile(filename, md, os.ModePerm); err != nil {
 		c.SetStatusCode(fasthttp.StatusInternalServerError)
 		log.Println("[E]", err)
@@ -396,7 +430,7 @@ func postArticle(c *fasthttp.RequestCtx) {
 		return
 	}
 	t.Id = upload.Id
-	t.Markdown = upload.Md
+	t.Markdown = b2s(bytes)
 	//t.Html = MarkdownToHtml(upload.Md)
 	fi, err := os.Stat(filename)
 	if err != nil {
@@ -427,6 +461,11 @@ func getArticle(c *fasthttp.RequestCtx) {
 	if !strings.HasSuffix(strings.ToLower(articleId), ".md") {
 		// Target don't have a .md suffix which means
 		// the file is not a markdown document.
+		if strings.HasSuffix(articleId, "/") {
+			c.Redirect("/dir"+articleId, 301)
+			return
+		}
+		log.Printf("articleId=%s", articleId)
 		c.SendFile("article" + articleId)
 		return
 	}
@@ -459,36 +498,56 @@ func getArticle(c *fasthttp.RequestCtx) {
 	}
 }
 
-func scanArticleDir() {
-	ArticleList = *new(ArticlePointArray)
-	files, err := ioutil.ReadDir("article")
+// Note: relPath must starts with '/' and ends with '/'.
+// "/" is a valid relPath.
+func scanArticleDir(relPath string) {
+	go func() {
+		for {
+			ArticleList = *new(ArticlePointArray)
+			doScanDir(relPath)
+			log.Printf("[INFO] Scan directory finished.")
+			time.Sleep(15 * time.Second)
+		}
+	}()
+}
+
+func doScanDir(relPath string) {
+	files, err := ioutil.ReadDir("article" + relPath)
 	if err != nil {
 		log.Println("[error]", err)
 		os.Exit(1)
 	}
 	for _, v := range files {
-		if strings.HasSuffix(v.Name(), ".md") {
-			log.Println("[I] Article name:", v.Name())
+		if v.IsDir() {
+			doScanDir(relPath + v.Name() + "/")
+		} else if strings.HasSuffix(v.Name(), ".md") {
+			//log.Println("[DEBUG] Article name:", relPath+v.Name())
 			t := new(Article)
-			t.Id = strings.Replace(v.Name(), ".md", "", -1)
+			t.Id = relPath + v.Name()
+			//t.Id = strings.Replace(v.Name(), ".md", "", -1)
 			if len(t.Id) < 1 {
 				log.Println("[error] article id length invalid")
 				os.Exit(1)
 			}
 			t.Timestamp = v.ModTime().UnixNano() / 1e6
-			html, err := getHtml("article/" + v.Name())
+			//html, err := getHtml("article/" + v.Name())
+			//if err != nil {
+			//	log.Println("[error] getSummaryAndMarkdown err:", err)
+			//	os.Exit(1)
+			//}
+			md, err := getMarkdown("article" + relPath + v.Name())
 			if err != nil {
-				log.Println("[error] getSummaryAndMarkdown err:", err)
-				os.Exit(1)
+				log.Printf("[ERROR] getMarkdown error=%s", err)
+				continue
 			}
-			t.Markdown = b2s(html)
-			t.Html = html
+			t.Markdown = strings.ToLower(b2s(md))
+			t.Html = nil
 			ArticleList = append(ArticleList, t)
 			ArticleMap[t.Id] = t
 		}
 	}
 	sort.Sort(ArticleList)
-	log.Println("[I] Scan article directory successfully")
+	//log.Println("[I] Scan article directory successfully")
 	return
 }
 
@@ -498,7 +557,7 @@ func getMarkdown(filename string) (markdown []byte, err error) {
 		log.Println("[E] 读取文件失败", err)
 		return
 	}
-	log.Println("[I] 读取", filename, "成功")
+	//log.Println("[DEBUG] 读取", filename, "成功")
 	return
 }
 
