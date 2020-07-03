@@ -113,7 +113,7 @@ func HighlightKeywordBytes(html []byte, key []byte) []byte {
 	  2: Inside special char e.g. &lt;*/
 	state := 0
 	matchLen := 0
-	flagBegin := []byte("<span style=\"color:red;background:yellow;\">")
+	flagBegin := []byte("<span style=\"background:yellow;\">")
 	flagEnd := []byte("</span>")
 	beginLen := len(flagBegin)
 	_ = beginLen
