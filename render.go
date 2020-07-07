@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"github.com/Depado/bfchroma"
 	"gopkg.in/russross/blackfriday.v2"
+	"strconv"
+	"strings"
 )
 
 var ignoreTagsByte = [][]byte{[]byte("script"), []byte("title")}
@@ -101,25 +103,57 @@ func HighlightKeyword(html string, key string) string {
 	return "123"
 }
 
-func HighlightKeywordBytes(html []byte, key []byte) []byte {
+type highlightTag struct {
+	beginO   string
+	begin    string
+	end      string
+	length   int
+	count    int
+	idPrefix string
+}
+
+func NewHighlightTag(begin, end, idPrefix string) *highlightTag {
+	ht := &highlightTag{}
+	ht.beginO = begin
+	ht.begin = begin
+	ht.end = end
+	ht.length = len(ht.begin) + len(ht.end)
+	ht.count = 0
+	ht.idPrefix = idPrefix
+	ht.incId()
+	return ht
+}
+
+func (ht *highlightTag) getBegin() []byte {
+	return []byte(ht.begin)
+}
+
+func (ht *highlightTag) getEnd() []byte {
+	return []byte(ht.end)
+}
+
+func (ht *highlightTag) getLength() int {
+	return ht.length
+}
+
+func (ht *highlightTag) incId() {
+	ht.count++
+	ht.begin = strings.Replace(ht.beginO, "{{id}}", ht.idPrefix+strconv.Itoa(ht.count), 1)
+	ht.length = len(ht.begin) + len(ht.end)
+}
+
+func HighlightKeywordBytes(html []byte, key []byte, ht *highlightTag) []byte {
 	htmlData := make([]byte, len(html))
 	copy(htmlData, html)
 	keyRune := key
 	htmlLen := len(htmlData)
 	keyLen := len(keyRune)
-	/*STATE
-	  0: Outside angle bracket
-	  1: Inside angle bracket
-	  2: Inside special char e.g. &lt;*/
+	// STATE
+	// 0: Outside angle bracket
+	// 1: Inside angle bracket
+	// 2: Inside special char e.g. &lt;
 	state := 0
 	matchLen := 0
-	flagBegin := []byte("<span style=\"background:yellow;\">")
-	flagEnd := []byte("</span>")
-	beginLen := len(flagBegin)
-	_ = beginLen
-	//flagEndLen := len(flagEnd)
-	flagLen := len(flagBegin) + len(flagEnd)
-	_ = flagLen
 	ignoreTagLevel := 0
 	var tag = make([]byte, 0, 128)
 	var tagLen int
@@ -137,9 +171,10 @@ func HighlightKeywordBytes(html []byte, key []byte) []byte {
 				if matchLen >= keyLen {
 					// Find match!
 					matchLen = 0
-					htmlData = insertRuneSliceAtBytes(htmlData, flagBegin, flagEnd, i-keyLen+1, i+1)
-					i += flagLen
-					htmlLen += flagLen
+					htmlData = insertRuneSliceAtBytes(htmlData, ht.getBegin(), ht.getEnd(), i-keyLen+1, i+1)
+					i += ht.getLength()
+					htmlLen += ht.getLength()
+					ht.incId()
 				}
 			} else {
 				matchLen = 0

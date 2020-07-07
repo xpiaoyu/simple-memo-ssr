@@ -157,6 +157,7 @@ func searchHandler(c *fasthttp.RequestCtx) {
 		return
 	}
 	var result []searchResult
+	ht := NewHighlightTag(`<span style="background:yellow;" id="{{id}}">`, "</span>", "kwid-")
 	for _, v := range ArticleList {
 		idx := strings.Index(v.Markdown, strings.ToLower(b2s(keyword)))
 		if idx != -1 {
@@ -174,11 +175,13 @@ func searchHandler(c *fasthttp.RequestCtx) {
 			}
 
 			context := string([]rune(v.Markdown)[rStart:rEnd])
+			context = strings.Replace(context, "\r", "", -1)
+			context = strings.Replace(context, "\n", "", -1)
 
 			result = append(result,
 				searchResult{
 					Filename: v.Id,
-					Context:  template.HTML(b2s(HighlightKeywordBytes([]byte(html.EscapeString(context)), keyword))),
+					Context:  template.HTML(b2s(HighlightKeywordBytes([]byte(html.EscapeString(context)), keyword, ht))),
 				})
 		}
 	}
@@ -480,14 +483,15 @@ func getArticle(c *fasthttp.RequestCtx) {
 	//	}
 	//	return
 	//}
-	html, err := getHtml("article" + articleId)
+	htmlText, err := getHtml("article" + articleId)
 	if err != nil {
 		log.Println("[ERROR]", err)
 	}
 	c.SetContentType(ContentTypeHtml)
-	output := html
+	output := htmlText
 	if utf8.RuneCount(key) >= 2 {
-		output = HighlightKeywordBytes(output, key)
+		ht := NewHighlightTag(`<span style="background:yellow;" id="{{id}}">`, "</span>", "kwid-")
+		output = HighlightKeywordBytes(output, key, ht)
 	}
 	if err := tpl.ExecuteTemplate(c, "article.html",
 		TplArticle{
