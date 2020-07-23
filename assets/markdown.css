@@ -22,7 +22,7 @@ body {
     font-size: 16px;
     line-height: 1.6;
     color: #333;
-    background-color: #fff;
+    background-color: #f5f5e5;
     padding: 20px;
     max-width: 960px;
     margin: 0 auto;
@@ -182,7 +182,7 @@ code, tt {
     font-size: 90%;
     color: #c7254e;
     white-space: normal;
-    background-color: #f9f2f4;
+    background-color: #f5e2c5;
     border-radius: 4px;
 }
 
@@ -200,10 +200,10 @@ pre {
     padding: 16px;
     overflow: auto;
     word-wrap: normal;
-    font-size: 85%;
-    line-height: 1.45;
+    font-size: 90%;
+    line-height: 1.5;
     background-color: #f6f8fa;
-    border-radius: 3px;
+    border-radius: 8px;
 }
 
 pre code, pre tt {
