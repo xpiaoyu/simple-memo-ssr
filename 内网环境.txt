@@ -1,0 +1,4 @@
+内网环境
+business:	http://117.131.114.100:9090/business
+user:	http://117.131.114.100:9090/general-user
+news:	http://117.131.114.100:9090/general-news
